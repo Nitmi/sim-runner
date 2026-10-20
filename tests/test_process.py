@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -47,6 +48,28 @@ def test_output_overflow_is_bounded_and_stopped(tmp_path):
     assert result["error"] == "OUTPUT_LIMIT"
     assert (tmp_path / "backend.stdout.bin").stat().st_size <= 4096
     assert result["cleanup"]["job_active_processes"] == 0
+
+
+def test_uart_limit_while_native_writer_has_exclusive_file_handle(tmp_path):
+    fixture = Path(__file__).with_name("exclusive_writer.py")
+    result = execute(
+        [sys.executable, str(fixture), str(tmp_path / "uart.bin")], tmp_path, 10, 4096, 512
+    )
+    assert result["error"] == "OUTPUT_LIMIT", result
+    assert result["cleanup"]["job_active_processes"] == 0
+
+
+def test_uart_path_can_appear_and_disappear_during_native_startup(tmp_path):
+    code = (
+        "from pathlib import Path;import sys\n"
+        "p=Path(sys.argv[1])\n"
+        "for i in range(3000):\n p.write_bytes(b'');p.unlink()\n"
+    )
+    result = execute(
+        [sys.executable, "-c", code, str(tmp_path / "uart.bin")], tmp_path, 15, 4096, 512
+    )
+    assert result["error"] is None, result
+    assert result["exit_code"] == 0
 
 
 def test_nonzero_exit_is_not_masked(tmp_path):

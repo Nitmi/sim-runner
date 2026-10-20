@@ -18,6 +18,7 @@ def execute(command: list[str], directory: Path, timeout: int, limit: int, memor
     threads = []
     errors = []
     reason = None
+    error_detail = None
     forced = False
     resumed = False
     started = time.monotonic()
@@ -87,14 +88,26 @@ def execute(command: list[str], directory: Path, timeout: int, limit: int, memor
                 reason = "TIMEOUT"
                 break
             uart = directory / "uart.bin"
-            if uart.exists() and uart.stat().st_size > limit:
+            try:
+                uart_size = uart.stat().st_size
+            except FileNotFoundError:
+                # Native path resolution may briefly create/remove a placeholder.
+                # Avoid an exists()/stat() race while still checking real I/O errors.
+                uart_size = 0
+            if uart_size > limit:
                 reason = "OUTPUT_LIMIT"
                 break
             time.sleep(0.02)
     except KeyboardInterrupt:
         reason = "CANCELLED"
     except (OSError, SimError) as error:
-        reason = getattr(error, "code", "PROCESS_START_FAILED")
+        reason = getattr(error, "code", "HOST_IO_ERROR" if resumed else "PROCESS_START_FAILED")
+        error_detail = {
+            "type": type(error).__name__,
+            "message": str(error),
+            "errno": getattr(error, "errno", None),
+            "winerror": getattr(error, "winerror", None),
+        }
     finally:
         if process is not None:
             if process.poll() is None or job.active():
@@ -137,6 +150,7 @@ def execute(command: list[str], directory: Path, timeout: int, limit: int, memor
         "execution_resumed": resumed,
         "exit_code": process.returncode if process else None,
         "error": reason or (errors[0] if errors else None),
+        "error_detail": error_detail,
         "forced_termination": forced,
         "host_elapsed_seconds": round(time.monotonic() - started, 6),
         "cleanup": cleanup,
