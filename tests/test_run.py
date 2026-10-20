@@ -29,6 +29,7 @@ def test_exit_zero_or_valid_uart_cannot_hide_other_failures(
 
     def execute_double(argv, directory, *args):
         assert "--port" in argv and "-1" in argv and "--console" not in argv
+        assert argv[-2:] == ["--execute", "include @run.resc"]
         stdout = b"SIM_RUNNER_COMPLETED_V1\n"
         if fault == "warning":
             stdout += b"[WARNING] unsupported register\n"

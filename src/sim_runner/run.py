@@ -50,7 +50,9 @@ def run(plan_path: Path, expected: str, directory: Path) -> dict:
         "--plain",
         "--config",
         str(directory / "renode.config"),
-        str(directory / "run.resc"),
+        # Renode's implicit i @<full positional path> does not escape spaces.
+        "--execute",
+        "include @run.resc",
     ]
     started = datetime.now(UTC).isoformat()
     process = execute(
