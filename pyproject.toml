@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling==1.32.4"]
+build-backend = "hatchling.build"
+
+[project]
+name = "embedded-sim-runner"
+version = "0.1.0"
+description = "Bounded, evidence-preserving firmware simulation with Renode"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{name = "Nitmi"}]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest==9.1.1", "ruff==0.17.1", "hatchling==1.32.4"]
+
+[project.scripts]
+sim-runner = "sim_runner.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sim_runner"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
