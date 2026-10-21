@@ -11,7 +11,7 @@ from .winjob import Job
 
 
 def execute(command: list[str], directory: Path, timeout: int, limit: int, memory_mib: int) -> dict:
-    """Only the internal fixed Renode command is accepted by public run()."""
+    """Public run paths supply only fixed, audited emulator commands."""
     require(os.name == "nt", "execution requires Windows x64", "UNSUPPORTED_PLATFORM")
     job = Job(memory_mib)
     process = None

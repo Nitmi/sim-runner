@@ -1,0 +1,16 @@
+{
+  "profile": "esp32c3-ram-uart-v1",
+  "backend": "espressif-qemu",
+  "machine": "esp32c3",
+  "firmware_format": "ELF32 little-endian RV32IMC ET_EXEC, RAM-only PT_LOAD",
+  "iram": [1077395456, 409600],
+  "dram_alias": [1070071808, 393216],
+  "dram_alias_iram_offset": 16384,
+  "boot": "direct ELF entry, no boot ROM, flash image or persistent eFuse file",
+  "completion": "exact UART assertions and unforced native exit zero",
+  "tcg": "single-threaded, 16 MiB translation cache",
+  "virtual_clock": "icount shift=0, align=off, sleep=on; elapsed time not measured",
+  "bridges": [],
+  "unverified": ["ESP-IDF flash boot", "Wi-Fi", "BLE", "USB", "GPIO", "ADC", "electrical timing"],
+  "mmio_diagnostics": "fail emitted guest_errors/unimp/warnings; silent upstream stubs are not detectable"
+}

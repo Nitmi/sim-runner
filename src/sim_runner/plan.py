@@ -40,16 +40,28 @@ def inventory(root: Path) -> set[str]:
     return files
 
 
-def runtime(lock: Path, expected: str) -> dict:
+def runtime(lock: Path, expected: str, backend: str = "renode") -> dict:
     value = decode(bound(lock, expected, 4 * 1024 * 1024))
     require(isinstance(value, dict), "runtime lock must be an object")
     require(
         value.get("schema_version") == "embedded-sim-runner.runtime-lock.v1", "bad runtime lock"
     )
+    supported = {
+        "renode": ("1.17.0", "renode.exe"),
+        "espressif-qemu": ("esp-develop-9.2.2-20260417", "bin/qemu-system-riscv32.exe"),
+    }
+    require(backend in supported, "unsupported backend")
+    version, executable = supported[backend]
     require(
-        value.get("backend") == "renode" and value.get("version") == "1.17.0", "unsupported runtime"
+        value.get("backend") == backend and value.get("version") == version, "unsupported runtime"
     )
-    require(value.get("executable") == "renode.exe", "unexpected runtime executable")
+    require(value.get("executable") == executable, "unexpected runtime executable")
+    if backend == "espressif-qemu":
+        require(
+            value.get("archive_sha256")
+            == "697aa4800a1f52be0b1693b30e22a684f7ea93c46c489e619384cae7b0e9b87b",
+            "unsupported QEMU distribution",
+        )
     root = Path(value["root"])
     require(
         root.is_absolute() and root.is_dir(), "runtime root must be an existing absolute directory"

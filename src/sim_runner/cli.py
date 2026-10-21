@@ -5,8 +5,8 @@ import json
 import sys
 from pathlib import Path
 
-from . import __version__
-from .common import FLAGS, SimError, file_record, require, write_json
+from . import __version__, qemu
+from .common import FLAGS, SimError, bound, decode, file_record, require, write_json
 from .inspect import inspect_report
 from .plan import load_plan, make_plan, runtime
 from .run import run
@@ -14,25 +14,27 @@ from .run import run
 
 def main(argv=None):
     parser = argparse.ArgumentParser(
-        description="Bounded Renode firmware simulation; no hardware access"
+        description="Bounded Renode/Espressif QEMU simulation; no hardware access"
     )
     parser.add_argument("--version", action="version", version=f"sim-runner {__version__}")
     commands = parser.add_subparsers(dest="operation", required=True)
     doctor = commands.add_parser("doctor", help="inspect hash-bound runtime without launching it")
     doctor.add_argument("--runtime-lock", type=Path, required=True)
     doctor.add_argument("--runtime-sha256", required=True)
+    doctor.add_argument("--backend", choices=("renode", qemu.BACKEND), default="renode")
     plan = commands.add_parser(
         "plan", help="prepare an offline plan; no per-run confirmation needed"
     )
     plan.add_argument("--runtime-lock", type=Path, required=True)
     plan.add_argument("--runtime-sha256", required=True)
+    plan.add_argument("--backend", choices=("renode", qemu.BACKEND), default="renode")
     plan.add_argument("--firmware", type=Path, required=True)
     plan.add_argument("--firmware-sha256", required=True)
     plan.add_argument("--ready-line", required=True)
     plan.add_argument("--build-line", required=True)
     plan.add_argument("--heartbeat-prefix", required=True)
     plan.add_argument("--min-heartbeats", type=int, default=3)
-    plan.add_argument("--virtual-ms", type=int, default=250)
+    plan.add_argument("--virtual-ms", type=int, help="Renode only; defaults to 250 ms")
     plan.add_argument("--timeout", type=int, default=30)
     plan.add_argument("--output-limit", type=int, default=1048576)
     plan.add_argument("--memory-mib", type=int, default=1024)
@@ -51,7 +53,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         if args.operation == "doctor":
-            info = runtime(args.runtime_lock, args.runtime_sha256)
+            info = runtime(args.runtime_lock, args.runtime_sha256, args.backend)
             result = {
                 **FLAGS,
                 "ok": True,
@@ -61,7 +63,7 @@ def main(argv=None):
                 "runtime_files": len(info["files"]),
             }
         elif args.operation == "plan":
-            result = make_plan(
+            common = (
                 args.runtime_lock,
                 args.runtime_sha256,
                 args.firmware,
@@ -70,11 +72,20 @@ def main(argv=None):
                 args.build_line,
                 args.heartbeat_prefix,
                 args.min_heartbeats,
-                args.virtual_ms,
-                args.timeout,
-                args.output_limit,
-                args.memory_mib,
             )
+            if args.backend == qemu.BACKEND:
+                require(
+                    args.virtual_ms is None, "QEMU profile does not enforce a virtual-time budget"
+                )
+                result = qemu.make_plan(*common, args.timeout, args.output_limit, args.memory_mib)
+            else:
+                result = make_plan(
+                    *common,
+                    250 if args.virtual_ms is None else args.virtual_ms,
+                    args.timeout,
+                    args.output_limit,
+                    args.memory_mib,
+                )
             write_json(args.output, result)
             result = {
                 **FLAGS,
@@ -84,7 +95,9 @@ def main(argv=None):
                 "plan": file_record(args.output),
             }
         elif args.operation == "inspect-plan":
-            result = load_plan(args.plan, args.sha256)
+            schema = decode(bound(args.plan, args.sha256, 65536))["schema_version"]
+            loader = qemu.load_plan if schema == qemu.PLAN_SCHEMA else load_plan
+            result = loader(args.plan, args.sha256)
             result = {
                 **FLAGS,
                 "ok": True,
@@ -93,10 +106,14 @@ def main(argv=None):
                 "profile": result["profile"],
             }
         elif args.operation == "inspect-report":
-            result = inspect_report(args.report, args.sha256)
+            schema = decode(bound(args.report, args.sha256, 1024 * 1024))["schema_version"]
+            inspector = qemu.inspect_report if schema == qemu.REPORT_SCHEMA else inspect_report
+            result = inspector(args.report, args.sha256)
         else:
             require(sys.maxsize > 2**32, "64-bit Python required", "UNSUPPORTED_PLATFORM")
-            result = run(args.plan, args.sha256, args.output_dir.resolve())
+            schema = decode(bound(args.plan, args.sha256, 65536))["schema_version"]
+            runner = qemu.run if schema == qemu.PLAN_SCHEMA else run
+            result = runner(args.plan, args.sha256, args.output_dir.resolve())
     except (SimError, OSError, ValueError, KeyError, TypeError) as error:
         result = {
             **FLAGS,

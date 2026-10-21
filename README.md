@@ -1,10 +1,17 @@
 # sim-runner
 
-Local CLI for bounded firmware simulation and saved UART evidence. The 0.1.0
-candidate supports Windows x64, Renode 1.17.0 and one **UART-only nRF52840 model**.
-It runs ARM machine code in Renode, with no physical device enumeration.
+Local CLI for bounded firmware simulation and saved UART evidence. The 0.2.0
+candidate supports Windows x64 with two fixed profiles: Renode 1.17.0 nRF52840
+UART and Espressif QEMU ESP32-C3 RAM/UART. Neither enumerates physical devices.
+The following Renode commands remain compatible; regenerate 0.1.0 plans with
+the 0.2.0 runner because plans bind the runner version.
 
-The model includes Cortex-M4/NVIC, 1 MiB mapped flash, 256 KiB RAM and UART0.
+For QEMU setup, executable ELF constraints and reproducible smoke commands, see
+[ESP32-C3 profile](docs/esp32c3-qemu.md). It is direct RAM ELF execution, not an
+ESP-IDF flash-boot or ESP32-S3 profile. Use `--backend espressif-qemu` on doctor
+and plan; run and inspectors route from the hash-bound saved schema.
+
+The Renode model includes Cortex-M4/NVIC, 1 MiB mapped flash, 256 KiB RAM and UART0.
 Flash and RAM start zero-filled in each new process; the raw firmware image is
 copied to address zero. This is not Nordic erased-flash behavior. There is no
 SoftDevice, radio, GPIO, timer, UICR, flash-controller or board electrical model.
@@ -86,7 +93,8 @@ identity, peripheral timing, power, RF, temperature or actual board operation.
 
 Run pytest and Ruff in an isolated Python environment. Unit/lifecycle tests use
 explicit synthetic fixtures; `scripts/accept_local.py` runs actual pinned Renode
-and archives separate positive/negative execution evidence. No hardware is used.
+and archives separate positive/negative execution evidence. `scripts/accept_qemu.py`
+does the same with the actual Espressif QEMU backend. No hardware is used.
 
 Upstream documentation: [Renode installation](https://github.com/renode/renode),
 [UART file backend](https://renode.readthedocs.io/en/latest/host-integration/uart.html),
