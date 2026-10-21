@@ -1,13 +1,14 @@
 # sim-runner
 
-Local CLI for bounded firmware simulation and saved UART evidence. The 0.3.0
-local candidate supports Windows x64 with three fixed profiles: Renode 1.17.0 nRF52840
-UART, Espressif QEMU ESP32-C3 RAM/UART and actual ESP-IDF 5.5.2 Flash boot.
+Local CLI for bounded firmware simulation and saved UART evidence. The 0.4.0
+local candidate supports Windows x64 with four fixed profiles: Renode 1.17.0 nRF52840
+UART and [GPIO/TIMER0 IRQ](docs/nrf52840-gpio-timer.md), Espressif QEMU ESP32-C3
+RAM/UART and actual ESP-IDF 5.5.2 Flash boot.
 None enumerates physical devices. The new
 [Flash boot profile](docs/esp32c3-idf-flash.md) requires explicit selection and
 retains reviewed QEMU limitations as `passed_with_model_limits`; it does not
 establish complete chip, PMP, Flash command, security or physical compatibility.
-The following Renode commands remain compatible; regenerate 0.1.0 plans with
+The following Renode commands remain compatible; regenerate older plans with
 the current runner because plans bind the runner version.
 
 For QEMU setup, executable ELF constraints and reproducible smoke commands, see
@@ -15,10 +16,13 @@ For QEMU setup, executable ELF constraints and reproducible smoke commands, see
 ESP-IDF flash-boot or ESP32-S3 profile. Use `--backend espressif-qemu` on doctor
 and plan; run and inspectors route from the hash-bound saved schema.
 
-The Renode model includes Cortex-M4/NVIC, 1 MiB mapped flash, 256 KiB RAM and UART0.
+The default Renode UART model includes Cortex-M4/NVIC, 1 MiB mapped flash, 256 KiB RAM and UART0.
 Flash and RAM start zero-filled in each new process; the raw firmware image is
 copied to address zero. This is not Nordic erased-flash behavior. There is no
 SoftDevice, radio, GPIO, timer, UICR, flash-controller or board electrical model.
+The explicitly selected GPIO/TIMER0 profile adds only its documented digital
+subset, fixed input schedule and output loopback. Its 16 IRQ samples and four
+model snapshots do not establish complete model coverage or physical timing.
 Warnings, errors and unhandled MMIO fail acceptance. UART output is byte-order
 evidence, not an electrical baud-rate or pin-routing measurement.
 

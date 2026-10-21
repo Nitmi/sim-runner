@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import __version__, qemu, qemu_flash
+from . import __version__, gpio_timer, qemu, qemu_flash
 from .common import FLAGS, SimError, bound, decode, file_record, require, write_json
 from .inspect import inspect_report
 from .plan import load_plan, make_plan, runtime
@@ -28,14 +28,23 @@ def main(argv=None):
     plan.add_argument("--runtime-lock", type=Path, required=True)
     plan.add_argument("--runtime-sha256", required=True)
     plan.add_argument("--backend", choices=("renode", qemu.BACKEND), default="renode")
-    plan.add_argument("--profile", choices=("nrf52840-uart-v1", qemu.PROFILE, qemu_flash.PROFILE))
+    plan.add_argument(
+        "--profile",
+        choices=("nrf52840-uart-v1", gpio_timer.PROFILE, qemu.PROFILE, qemu_flash.PROFILE),
+    )
     plan.add_argument("--firmware", type=Path, required=True)
     plan.add_argument("--firmware-sha256", required=True)
     plan.add_argument("--ready-line", required=True)
     plan.add_argument("--build-line", required=True)
     plan.add_argument("--heartbeat-prefix", required=True)
-    plan.add_argument("--min-heartbeats", type=int, default=3)
-    plan.add_argument("--virtual-ms", type=int, help="Renode only; defaults to 250 ms")
+    plan.add_argument(
+        "--min-heartbeats",
+        type=int,
+        help="defaults to 3; GPIO profile requires/defaults to 16 IRQ samples",
+    )
+    plan.add_argument(
+        "--virtual-ms", type=int, help="Renode only; defaults to 250 ms (GPIO: fixed 82)"
+    )
     plan.add_argument("--timeout", type=int, default=30)
     plan.add_argument("--output-limit", type=int, default=1048576)
     plan.add_argument("--memory-mib", type=int, default=1024)
@@ -72,7 +81,9 @@ def main(argv=None):
                 args.ready_line,
                 args.build_line,
                 args.heartbeat_prefix,
-                args.min_heartbeats,
+                (16 if args.profile == gpio_timer.PROFILE else 3)
+                if args.min_heartbeats is None
+                else args.min_heartbeats,
             )
             if args.backend == qemu.BACKEND:
                 require(
@@ -87,10 +98,15 @@ def main(argv=None):
                 )
                 result = planner(*common, args.timeout, args.output_limit, args.memory_mib)
             else:
-                require(args.profile in (None, "nrf52840-uart-v1"), "profile/backend differ")
-                result = make_plan(
+                require(
+                    args.profile in (None, "nrf52840-uart-v1", gpio_timer.PROFILE),
+                    "profile/backend differ",
+                )
+                planner = gpio_timer.make_plan if args.profile == gpio_timer.PROFILE else make_plan
+                default_ms = 82 if args.profile == gpio_timer.PROFILE else 250
+                result = planner(
                     *common,
-                    250 if args.virtual_ms is None else args.virtual_ms,
+                    default_ms if args.virtual_ms is None else args.virtual_ms,
                     args.timeout,
                     args.output_limit,
                     args.memory_mib,
@@ -108,6 +124,7 @@ def main(argv=None):
             loader = {
                 qemu.PLAN_SCHEMA: qemu.load_plan,
                 qemu_flash.PLAN_SCHEMA: qemu_flash.load_plan,
+                gpio_timer.PLAN_SCHEMA: gpio_timer.load_plan,
             }.get(schema, load_plan)
             result = loader(args.plan, args.sha256)
             result = {
@@ -123,14 +140,23 @@ def main(argv=None):
                 qemu.REPORT_SCHEMA: qemu.inspect_report,
                 qemu_flash.REPORT_SCHEMA: qemu_flash.inspect_report,
             }.get(schema, inspect_report)
-            result = inspector(args.report, args.sha256)
+            result = inspector(
+                args.report,
+                args.sha256,
+                **({"profile": gpio_timer} if schema == gpio_timer.REPORT_SCHEMA else {}),
+            )
         else:
             require(sys.maxsize > 2**32, "64-bit Python required", "UNSUPPORTED_PLATFORM")
             schema = decode(bound(args.plan, args.sha256, 65536))["schema_version"]
             runner = {qemu.PLAN_SCHEMA: qemu.run, qemu_flash.PLAN_SCHEMA: qemu_flash.run}.get(
                 schema, run
             )
-            result = runner(args.plan, args.sha256, args.output_dir.resolve())
+            result = runner(
+                args.plan,
+                args.sha256,
+                args.output_dir.resolve(),
+                **({"profile": gpio_timer} if schema == gpio_timer.PLAN_SCHEMA else {}),
+            )
     except (SimError, OSError, ValueError, KeyError, TypeError) as error:
         result = {
             **FLAGS,

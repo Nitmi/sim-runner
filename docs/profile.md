@@ -1,5 +1,9 @@
 # nrf52840-uart-v1 coverage
 
+For the separate input/interrupt/output scenario, use the explicitly selected
+[GPIO/TIMER0 profile](nrf52840-gpio-timer.md). This default UART profile remains
+unchanged and does not gain those peripherals implicitly.
+
 This fixed profile is deliberately smaller than Renode's upstream nRF52840
 platform. It instantiates upstream built-in models rather than inventing MMIO
 stubs, and has no upstream platform includes or `ApplySVD` URL. Upstream model

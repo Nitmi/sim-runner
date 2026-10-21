@@ -25,14 +25,15 @@ def script(virtual_ms: int) -> str:
     )
 
 
-def run(plan_path: Path, expected: str, directory: Path) -> dict:
+def run(plan_path: Path, expected: str, directory: Path, *, profile=None) -> dict:
     plan_data = bound(plan_path, expected, 65536)
-    plan = load_plan(plan_path, expected)
+    plan = (load_plan if profile is None else profile.load_plan)(plan_path, expected)
     require(not directory.exists(), "output directory already exists")
     lock_path = Path(plan["runtime_lock"]["path"])
     info = runtime(lock_path, plan["runtime_lock"]["sha256"])
     image = bound(Path(plan["firmware"]["path"]), plan["firmware"]["sha256"], 1024 * 1024)
-    model = bound(ASSETS / "nrf52840-uart.repl", plan["model_sha256"], 16384)
+    model_path = ASSETS / "nrf52840-uart.repl" if profile is None else profile.MODEL
+    model = bound(model_path, plan["model_sha256"], 16384)
     directory.mkdir(parents=True, exist_ok=False)
     (directory / "plan.json").write_bytes(plan_data)
     (directory / "runtime-lock.json").write_bytes(
@@ -40,7 +41,11 @@ def run(plan_path: Path, expected: str, directory: Path) -> dict:
     )
     (directory / "firmware.bin").write_bytes(image)
     (directory / "model.repl").write_bytes(model)
-    (directory / "run.resc").write_text(script(plan["virtual_ms"]), encoding="utf-8", newline="\n")
+    (directory / "run.resc").write_text(
+        (script if profile is None else profile.script)(plan["virtual_ms"]),
+        encoding="utf-8",
+        newline="\n",
+    )
     (directory / "renode.config").write_text("", encoding="ascii")
     argv = [
         str(Path(info["root"]) / info["executable"]),
@@ -87,20 +92,25 @@ def run(plan_path: Path, expected: str, directory: Path) -> dict:
         virtual_completed = True
         # Renode may exit 0 after monitor/peripheral errors.
         check_logs(stdout, stderr)
-        assertion_result = evaluate(
-            payload(directory / "uart.bin", plan["output_limit_bytes_per_file"]), plan["assertions"]
+        uart = payload(directory / "uart.bin", plan["output_limit_bytes_per_file"])
+        assertion_result = (
+            evaluate(uart, plan["assertions"])
+            if profile is None
+            else profile.evaluate(uart, plan["assertions"], stdout)
         )
     except (SimError, OSError, UnicodeError) as error:
         errors.append({"code": getattr(error, "code", "EVIDENCE_INVALID"), "message": str(error)})
     try:
         runtime(lock_path, plan["runtime_lock"]["sha256"])
         bound(Path(plan["firmware"]["path"]), plan["firmware"]["sha256"], 1024 * 1024)
-        bound(ASSETS / "nrf52840-uart.repl", plan["model_sha256"], 16384)
+        bound(model_path, plan["model_sha256"], 16384)
         current = True
     except (SimError, OSError) as error:
         errors.append({"code": "INPUT_CHANGED", "message": str(error)})
     report = {
-        "schema_version": "embedded-sim-runner.report.v1",
+        "schema_version": "embedded-sim-runner.report.v1"
+        if profile is None
+        else profile.REPORT_SCHEMA,
         **FLAGS,
         "ok": not errors,
         "status": "passed" if not errors else "failed",
@@ -125,6 +135,7 @@ def run(plan_path: Path, expected: str, directory: Path) -> dict:
         "input_hashes_current": current,
         "artifacts": {p.name: file_record(p) for p in directory.iterdir() if p.is_file()},
         "errors": errors,
+        **({} if profile is None else profile.COVERAGE),
     }
     write_json(directory / "report.json", report)
     return report
