@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import __version__, qemu
+from . import __version__, qemu, qemu_flash
 from .common import FLAGS, SimError, bound, decode, file_record, require, write_json
 from .inspect import inspect_report
 from .plan import load_plan, make_plan, runtime
@@ -28,6 +28,7 @@ def main(argv=None):
     plan.add_argument("--runtime-lock", type=Path, required=True)
     plan.add_argument("--runtime-sha256", required=True)
     plan.add_argument("--backend", choices=("renode", qemu.BACKEND), default="renode")
+    plan.add_argument("--profile", choices=("nrf52840-uart-v1", qemu.PROFILE, qemu_flash.PROFILE))
     plan.add_argument("--firmware", type=Path, required=True)
     plan.add_argument("--firmware-sha256", required=True)
     plan.add_argument("--ready-line", required=True)
@@ -77,8 +78,16 @@ def main(argv=None):
                 require(
                     args.virtual_ms is None, "QEMU profile does not enforce a virtual-time budget"
                 )
-                result = qemu.make_plan(*common, args.timeout, args.output_limit, args.memory_mib)
+                require(
+                    args.profile in (None, qemu.PROFILE, qemu_flash.PROFILE),
+                    "profile/backend differ",
+                )
+                planner = (
+                    qemu_flash.make_plan if args.profile == qemu_flash.PROFILE else qemu.make_plan
+                )
+                result = planner(*common, args.timeout, args.output_limit, args.memory_mib)
             else:
+                require(args.profile in (None, "nrf52840-uart-v1"), "profile/backend differ")
                 result = make_plan(
                     *common,
                     250 if args.virtual_ms is None else args.virtual_ms,
@@ -96,7 +105,10 @@ def main(argv=None):
             }
         elif args.operation == "inspect-plan":
             schema = decode(bound(args.plan, args.sha256, 65536))["schema_version"]
-            loader = qemu.load_plan if schema == qemu.PLAN_SCHEMA else load_plan
+            loader = {
+                qemu.PLAN_SCHEMA: qemu.load_plan,
+                qemu_flash.PLAN_SCHEMA: qemu_flash.load_plan,
+            }.get(schema, load_plan)
             result = loader(args.plan, args.sha256)
             result = {
                 **FLAGS,
@@ -107,12 +119,17 @@ def main(argv=None):
             }
         elif args.operation == "inspect-report":
             schema = decode(bound(args.report, args.sha256, 1024 * 1024))["schema_version"]
-            inspector = qemu.inspect_report if schema == qemu.REPORT_SCHEMA else inspect_report
+            inspector = {
+                qemu.REPORT_SCHEMA: qemu.inspect_report,
+                qemu_flash.REPORT_SCHEMA: qemu_flash.inspect_report,
+            }.get(schema, inspect_report)
             result = inspector(args.report, args.sha256)
         else:
             require(sys.maxsize > 2**32, "64-bit Python required", "UNSUPPORTED_PLATFORM")
             schema = decode(bound(args.plan, args.sha256, 65536))["schema_version"]
-            runner = qemu.run if schema == qemu.PLAN_SCHEMA else run
+            runner = {qemu.PLAN_SCHEMA: qemu.run, qemu_flash.PLAN_SCHEMA: qemu_flash.run}.get(
+                schema, run
+            )
             result = runner(args.plan, args.sha256, args.output_dir.resolve())
     except (SimError, OSError, ValueError, KeyError, TypeError) as error:
         result = {

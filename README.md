@@ -1,10 +1,14 @@
 # sim-runner
 
-Local CLI for bounded firmware simulation and saved UART evidence. The 0.2.0
-candidate supports Windows x64 with two fixed profiles: Renode 1.17.0 nRF52840
-UART and Espressif QEMU ESP32-C3 RAM/UART. Neither enumerates physical devices.
+Local CLI for bounded firmware simulation and saved UART evidence. The 0.3.0
+local candidate supports Windows x64 with three fixed profiles: Renode 1.17.0 nRF52840
+UART, Espressif QEMU ESP32-C3 RAM/UART and actual ESP-IDF 5.5.2 Flash boot.
+None enumerates physical devices. The new
+[Flash boot profile](docs/esp32c3-idf-flash.md) requires explicit selection and
+retains reviewed QEMU limitations as `passed_with_model_limits`; it does not
+establish complete chip, PMP, Flash command, security or physical compatibility.
 The following Renode commands remain compatible; regenerate 0.1.0 plans with
-the 0.2.0 runner because plans bind the runner version.
+the current runner because plans bind the runner version.
 
 For QEMU setup, executable ELF constraints and reproducible smoke commands, see
 [ESP32-C3 profile](docs/esp32c3-qemu.md). It is direct RAM ELF execution, not an
