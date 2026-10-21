@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  host-checks:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        python: ['3.11', '3.13']
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990
+        with:
+          version: '0.11.7'
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+      - name: Install locked development tools
+        run: uv sync --locked --extra dev --python "${{ matrix.python }}"
+      - run: uv run --locked ruff check .
+      - run: uv run --locked ruff format --check .
+      - name: Host tests (Windows includes real Job process lifecycle)
+        run: uv run --locked pytest -ra
+      - name: Build source-bound packages
+        run: uv run --locked python scripts/release.py build --output-dir "${{ runner.temp }}/sim-package"
+      - name: Smoke install without runtime dependencies or emulators
+        run: uv run --locked python scripts/package_smoke.py --dist-dir "${{ runner.temp }}/sim-package" --output-dir "${{ runner.temp }}/sim-smoke"

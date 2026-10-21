@@ -1,0 +1,70 @@
+name: Python release provenance
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+
+  package:
+    needs: checks
+    if: github.repository == 'Nitmi/sim-runner' && github.event_name == 'push'
+    runs-on: windows-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990
+        with:
+          version: '0.11.7'
+          python-version: '3.13'
+          enable-cache: true
+      - run: uv sync --locked --extra dev
+      - name: Bind tag and commit, build twice, compare all four assets
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $commit = (git rev-parse HEAD).Trim()
+          if ($LASTEXITCODE -ne 0 -or $commit -cne $env:GITHUB_SHA) { throw 'Checkout/trigger mismatch' }
+          $a = Join-Path $env:RUNNER_TEMP 'sim-release-a'
+          $b = Join-Path $env:RUNNER_TEMP 'sim-release-b'
+          uv run --locked python scripts/release.py build --tag $env:GITHUB_REF_NAME --output-dir $a
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          uv run --locked python scripts/release.py build --tag $env:GITHUB_REF_NAME --output-dir $b
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $files = @(Get-ChildItem -LiteralPath $a -File)
+          if ($files.Count -ne 4 -or @(Get-ChildItem -LiteralPath $b -File).Count -ne 4) { throw 'Expected four assets per build' }
+          foreach ($file in $files) {
+            $other = Join-Path $b $file.Name
+            if ((Get-FileHash -LiteralPath $file.FullName).Hash -cne (Get-FileHash -LiteralPath $other).Hash) { throw 'Builds differ' }
+          }
+          "release_a=$a" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Smoke install the exact wheel in a fresh environment
+        shell: pwsh
+        run: |
+          uv run --locked python scripts/package_smoke.py --dist-dir $env:release_a --output-dir (Join-Path $env:RUNNER_TEMP 'sim-release-smoke')
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Attest all four release assets
+        id: attest
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: ${{ env.release_a }}/*
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: sim-runner-python-release
+          path: |
+            ${{ env.release_a }}/*
+            ${{ steps.attest.outputs.bundle-path }}
+          if-no-files-found: error
+          retention-days: 14
