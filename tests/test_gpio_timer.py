@@ -116,6 +116,14 @@ def test_nominal_profile_asserts_exact_samples_and_snapshots(transcript):
     assert [s["timer_ticks"] for s in result["samples"]] == [1250 * i for i in range(1, 17)]
 
 
+def test_locale_encoded_host_paths_do_not_change_ascii_observation_protocol(transcript):
+    uart, stdout = transcript
+    stdout = b"[INFO] Including D:/\xd1\xe9\xca\xd5/run.resc\r\n" + stdout
+    assert len(gpio.evaluate(uart, arguments(), stdout)["model_observations"]) == 4
+    with pytest.raises(SimError):
+        gpio.evaluate(uart, arguments(), stdout.replace(b"26624\n26624", b"\xff26624\n26624", 1))
+
+
 @pytest.mark.parametrize(
     "fault", [None, "warning", "timeout", "missing-completion", "runtime-change"]
 )

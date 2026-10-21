@@ -183,15 +183,19 @@ def evaluate(data, assertions, stdout):
             }
         )
     observations = []
-    transcript = stdout.decode("utf-8", errors="strict")
+    # Renode host logs can use the Windows locale encoding (including paths).
+    # Parse only our ASCII protocol bytes; retain the complete raw log unchanged.
+    transcript = stdout
     require(
-        re.findall(r"(?m)^SIM_GPIO_OBS_([^\r\n]*)", transcript) == ["0", "1", "2", "3"],
+        re.findall(rb"(?m)^SIM_GPIO_OBS_([^\r\n]*)", transcript) == [b"0", b"1", b"2", b"3"],
         "GPIO model observation order/inventory differs",
         "ASSERTION_FAILED",
     )
     for index, phase in enumerate(PHASES):
         matches = re.findall(
-            r"(?m)^SIM_GPIO_OBS_" + str(index) + r"\r?\n([0-9]{1,10})\r?\n([0-9]{1,10})\r?$",
+            rb"(?m)^SIM_GPIO_OBS_"
+            + str(index).encode("ascii")
+            + rb"\r?\n([0-9]{1,10})\r?\n([0-9]{1,10})\r?$",
             transcript,
         )
         require(len(matches) == 1, "missing/duplicate GPIO model observation", "ASSERTION_FAILED")

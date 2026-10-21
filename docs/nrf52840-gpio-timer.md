@@ -28,6 +28,8 @@ RunFor schedule, not sampled wall clock, UART timestamps or electrical edges.
 Raw register observations are emitted by the pinned runtime's `console_log`
 command to the native stdout; ordinary monitor result / echo output is not
 captured by headless mode. The exact script and its SHA-256 are bound in the plan.
+Only the fixed ASCII observation protocol is parsed as bytes; Windows locale
+encoding in surrounding host log paths is retained without lossy transcoding.
 
 Firmware uses TIMER0 timer mode, prescaler 6 (16 MHz / 64 = 250 kHz) and CC0
 interrupts at absolute 1,250-tick intervals. Captures remain below 16-bit rollover;
