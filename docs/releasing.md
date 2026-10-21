@@ -1,8 +1,9 @@
 # Source-bound releases
 
-Version 0.5.0 is currently a local candidate. This repository has no public
-remote release yet. The workflows prepare artifacts and provenance; they do
-not create repositories, publish GitHub Releases or upload to PyPI.
+Version [0.5.0](https://github.com/Nitmi/sim-runner/releases/tag/v0.5.0) is
+published with verified build provenance for all four assets. The source tag
+binds commit `b6e463df30c73e6cf5d81597bfda0c7af5c02baf`. The workflows prepare
+artifacts and provenance; GitHub Release creation remains a separate action.
 
 ## Local preparation
 
@@ -49,8 +50,8 @@ uses actions/attest. External Actions are pinned to commit SHAs. The workflow
 has no contents-write or PyPI publishing permission. Tag creation and release
 publication are separate user-authorized actions.
 
-When publishing, create Nitmi/sim-runner and push the reviewed source first.
-Only after CI passes, create an immutable v0.5.0 tag. Verify successful tag
+For a subsequent release, push the reviewed source to Nitmi/sim-runner first.
+Only after CI passes, create an immutable tag matching the new version. Verify successful tag
 provenance and download the workflow's exact artifacts before creating a
 GitHub Release. Verification should constrain repository, source ref, source
 digest, signer workflow/digest and GitHub-hosted runners, for example:
