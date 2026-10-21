@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import __version__, gpio_timer, qemu, qemu_flash
+from . import __version__, gpio_timer, qemu, qemu_flash, qemu_s3
 from .common import FLAGS, SimError, bound, decode, file_record, require, write_json
 from .inspect import inspect_report
 from .plan import load_plan, make_plan, runtime
@@ -21,16 +21,26 @@ def main(argv=None):
     doctor = commands.add_parser("doctor", help="inspect hash-bound runtime without launching it")
     doctor.add_argument("--runtime-lock", type=Path, required=True)
     doctor.add_argument("--runtime-sha256", required=True)
-    doctor.add_argument("--backend", choices=("renode", qemu.BACKEND), default="renode")
+    doctor.add_argument(
+        "--backend", choices=("renode", qemu.BACKEND, qemu_s3.BACKEND), default="renode"
+    )
     plan = commands.add_parser(
         "plan", help="prepare an offline plan; no per-run confirmation needed"
     )
     plan.add_argument("--runtime-lock", type=Path, required=True)
     plan.add_argument("--runtime-sha256", required=True)
-    plan.add_argument("--backend", choices=("renode", qemu.BACKEND), default="renode")
+    plan.add_argument(
+        "--backend", choices=("renode", qemu.BACKEND, qemu_s3.BACKEND), default="renode"
+    )
     plan.add_argument(
         "--profile",
-        choices=("nrf52840-uart-v1", gpio_timer.PROFILE, qemu.PROFILE, qemu_flash.PROFILE),
+        choices=(
+            "nrf52840-uart-v1",
+            gpio_timer.PROFILE,
+            qemu.PROFILE,
+            qemu_flash.PROFILE,
+            qemu_s3.PROFILE,
+        ),
     )
     plan.add_argument("--firmware", type=Path, required=True)
     plan.add_argument("--firmware-sha256", required=True)
@@ -85,16 +95,24 @@ def main(argv=None):
                 if args.min_heartbeats is None
                 else args.min_heartbeats,
             )
-            if args.backend == qemu.BACKEND:
+            if args.backend in (qemu.BACKEND, qemu_s3.BACKEND):
                 require(
                     args.virtual_ms is None, "QEMU profile does not enforce a virtual-time budget"
                 )
                 require(
-                    args.profile in (None, qemu.PROFILE, qemu_flash.PROFILE),
+                    args.profile in (None, qemu_s3.PROFILE)
+                    if args.backend == qemu_s3.BACKEND
+                    else args.profile in (None, qemu.PROFILE, qemu_flash.PROFILE),
                     "profile/backend differ",
                 )
                 planner = (
-                    qemu_flash.make_plan if args.profile == qemu_flash.PROFILE else qemu.make_plan
+                    qemu_s3.make_plan
+                    if args.backend == qemu_s3.BACKEND
+                    else (
+                        qemu_flash.make_plan
+                        if args.profile == qemu_flash.PROFILE
+                        else qemu.make_plan
+                    )
                 )
                 result = planner(*common, args.timeout, args.output_limit, args.memory_mib)
             else:
@@ -124,6 +142,7 @@ def main(argv=None):
             loader = {
                 qemu.PLAN_SCHEMA: qemu.load_plan,
                 qemu_flash.PLAN_SCHEMA: qemu_flash.load_plan,
+                qemu_s3.PLAN_SCHEMA: qemu_s3.load_plan,
                 gpio_timer.PLAN_SCHEMA: gpio_timer.load_plan,
             }.get(schema, load_plan)
             result = loader(args.plan, args.sha256)
@@ -139,6 +158,7 @@ def main(argv=None):
             inspector = {
                 qemu.REPORT_SCHEMA: qemu.inspect_report,
                 qemu_flash.REPORT_SCHEMA: qemu_flash.inspect_report,
+                qemu_s3.REPORT_SCHEMA: qemu_s3.inspect_report,
             }.get(schema, inspect_report)
             result = inspector(
                 args.report,
@@ -148,9 +168,11 @@ def main(argv=None):
         else:
             require(sys.maxsize > 2**32, "64-bit Python required", "UNSUPPORTED_PLATFORM")
             schema = decode(bound(args.plan, args.sha256, 65536))["schema_version"]
-            runner = {qemu.PLAN_SCHEMA: qemu.run, qemu_flash.PLAN_SCHEMA: qemu_flash.run}.get(
-                schema, run
-            )
+            runner = {
+                qemu.PLAN_SCHEMA: qemu.run,
+                qemu_flash.PLAN_SCHEMA: qemu_flash.run,
+                qemu_s3.PLAN_SCHEMA: qemu_s3.run,
+            }.get(schema, run)
             result = runner(
                 args.plan,
                 args.sha256,

@@ -14,20 +14,20 @@ from sim_runner.cli import main
 from sim_runner.common import SimError, sha, write_json
 
 
-def esp_image():
+def esp_image(*, chip_id=5):
     header = bytearray(24)
     header[:4] = b"\xe9\x01\x02\x20"
     struct.pack_into("<I", header, 4, 0x40380000)
-    struct.pack_into("<H", header, 12, 5)
+    struct.pack_into("<H", header, 12, chip_id)
     header[23] = 1
     content = bytes(header) + struct.pack("<II", 0x40380000, 4) + b"\x01\x02\x03\x04"
     content += bytes(15 - len(content) % 16) + bytes([0xEF ^ 1 ^ 2 ^ 3 ^ 4])
     return content + hashlib.sha256(content).digest()
 
 
-def merged():
+def merged(*, chip_id=5):
     data = bytearray(b"\xff" * flash_image.FLASH_SIZE)
-    image = esp_image()
+    image = esp_image(chip_id=chip_id)
     data[: len(image)] = image
     data[0x10000 : 0x10000 + len(image)] = image
     table = b"".join(

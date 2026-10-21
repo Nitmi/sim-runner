@@ -1,9 +1,10 @@
 # sim-runner
 
-Local CLI for bounded firmware simulation and saved UART evidence. The 0.4.0
-local candidate supports Windows x64 with four fixed profiles: Renode 1.17.0 nRF52840
+Local CLI for bounded firmware simulation and saved UART evidence. The 0.5.0
+local candidate supports Windows x64 with five fixed profiles: Renode 1.17.0 nRF52840
 UART and [GPIO/TIMER0 IRQ](docs/nrf52840-gpio-timer.md), Espressif QEMU ESP32-C3
-RAM/UART and actual ESP-IDF 5.5.2 Flash boot.
+RAM/UART and actual ESP-IDF 5.5.2 C3 Flash boot, plus the separate Xtensa
+[ESP32-S3 Flash/dual-core UART profile](docs/esp32s3-qemu.md).
 None enumerates physical devices. The new
 [Flash boot profile](docs/esp32c3-idf-flash.md) requires explicit selection and
 retains reviewed QEMU limitations as `passed_with_model_limits`; it does not

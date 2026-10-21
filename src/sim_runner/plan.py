@@ -49,6 +49,7 @@ def runtime(lock: Path, expected: str, backend: str = "renode") -> dict:
     supported = {
         "renode": ("1.17.0", "renode.exe"),
         "espressif-qemu": ("esp-develop-9.2.2-20260417", "bin/qemu-system-riscv32.exe"),
+        "espressif-qemu-xtensa": ("esp-develop-9.2.2-20260417", "bin/qemu-system-xtensa.exe"),
     }
     require(backend in supported, "unsupported backend")
     version, executable = supported[backend]
@@ -56,10 +57,15 @@ def runtime(lock: Path, expected: str, backend: str = "renode") -> dict:
         value.get("backend") == backend and value.get("version") == version, "unsupported runtime"
     )
     require(value.get("executable") == executable, "unexpected runtime executable")
-    if backend == "espressif-qemu":
+    if backend in ("espressif-qemu", "espressif-qemu-xtensa"):
+        archive_sha = {
+            "espressif-qemu": "697aa4800a1f52be0b1693b30e22a684f7ea93c46c489e619384cae7b0e9b87b",
+            "espressif-qemu-xtensa": (
+                "3c483d77f5350a568df1faf4d8dbc82c95d6bc2b826d0d4be910485e0a68ca2a"
+            ),
+        }[backend]
         require(
-            value.get("archive_sha256")
-            == "697aa4800a1f52be0b1693b30e22a684f7ea93c46c489e619384cae7b0e9b87b",
+            value.get("archive_sha256") == archive_sha,
             "unsupported QEMU distribution",
         )
     root = Path(value["root"])

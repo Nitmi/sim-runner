@@ -15,14 +15,27 @@ URL = (
     f"https://github.com/espressif/qemu/releases/download/{VERSION}/"
     "qemu-riscv32-softmmu-esp_develop_9.2.2_20260417-x86_64-w64-mingw32.tar.xz"
 )
+XTENSA_SHA = "3c483d77f5350a568df1faf4d8dbc82c95d6bc2b826d0d4be910485e0a68ca2a"
+ARCHIVES = {
+    "riscv32": (38496020, EXPECTED, URL, "bin/qemu-system-riscv32.exe", "espressif-qemu"),
+    "xtensa": (
+        35996720,
+        XTENSA_SHA,
+        f"https://github.com/espressif/qemu/releases/download/{VERSION}/"
+        "qemu-xtensa-softmmu-esp_develop_9.2.2_20260417-x86_64-w64-mingw32.tar.xz",
+        "bin/qemu-system-xtensa.exe",
+        "espressif-qemu-xtensa",
+    ),
+}
 
 
-def pin(archive: Path, destination: Path, output: Path):
+def pin(archive: Path, destination: Path, output: Path, architecture="riscv32"):
+    size, expected, url, executable, backend = ARCHIVES[architecture]
     if (
-        archive.stat().st_size != 38496020
-        or hashlib.sha256(archive.read_bytes()).hexdigest() != EXPECTED
+        archive.stat().st_size != size
+        or hashlib.sha256(archive.read_bytes()).hexdigest() != expected
     ):
-        raise ValueError("archive differs from Espressif tools.json")
+        raise ValueError("archive differs from fixed official distribution")
     if destination.exists() or output.exists():
         raise ValueError("destination/lock already exists")
     files = {}
@@ -67,12 +80,12 @@ def pin(archive: Path, destination: Path, output: Path):
             ).hexdigest()
     result = {
         "schema_version": "embedded-sim-runner.runtime-lock.v1",
-        "backend": "espressif-qemu",
+        "backend": backend,
         "version": VERSION,
         "root": str((destination / "qemu").resolve()),
-        "executable": "bin/qemu-system-riscv32.exe",
-        "archive_sha256": EXPECTED,
-        "archive_source": URL,
+        "executable": executable,
+        "archive_sha256": expected,
+        "archive_source": url,
         "files": files,
     }
     with output.open("x", encoding="utf-8", newline="\n") as stream:
@@ -95,5 +108,6 @@ if __name__ == "__main__":
     parser.add_argument("--archive", type=Path, required=True)
     parser.add_argument("--destination", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--architecture", choices=tuple(ARCHIVES), default="riscv32")
     args = parser.parse_args()
-    pin(args.archive, args.destination.resolve(), args.output)
+    pin(args.archive, args.destination.resolve(), args.output, args.architecture)

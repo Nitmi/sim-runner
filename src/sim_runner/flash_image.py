@@ -15,7 +15,7 @@ PARTITIONS = [
 ]
 
 
-def image_info(data: bytes, start: int, limit: int) -> dict:
+def image_info(data: bytes, start: int, limit: int, *, chip_id: int = 5) -> dict:
     header = data[start : start + 24]
     require(len(header) == 24 and header[0] == 0xE9, "missing ESP image header")
     require(
@@ -23,8 +23,8 @@ def image_info(data: bytes, start: int, limit: int) -> dict:
         "requires unsigned 4 MiB DIO image",
     )
     require(
-        struct.unpack_from("<H", header, 12)[0] == 5 and header[23] == 1,
-        "requires C3 image with appended SHA-256",
+        struct.unpack_from("<H", header, 12)[0] == chip_id and header[23] == 1,
+        "requires matching chip image with appended SHA-256",
     )
     require(header[19:23] == bytes(4), "unsupported reserved image fields")
     position = start + 24
@@ -60,10 +60,11 @@ def image_info(data: bytes, start: int, limit: int) -> dict:
     }
 
 
-def flash_info(data: bytes) -> dict:
+def flash_info(data: bytes, *, chip_id: int = 5) -> dict:
     require(len(data) == FLASH_SIZE, "requires a complete 4 MiB merged Flash image")
-    boot = image_info(data, 0, 0x8000)
-    app = image_info(data, 0x10000, 0x110000)
+    require(chip_id in (5, 9), "unsupported Flash chip")
+    boot = image_info(data, 0, 0x8000, chip_id=chip_id)
+    app = image_info(data, 0x10000, 0x110000, chip_id=chip_id)
     position = 0x8000
     table = []
     for typ, subtype, offset, size, label in PARTITIONS:

@@ -16,8 +16,9 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def build(args):
-    source = Path(__file__).resolve().parent
+def build(args, *, source=None, target="esp32c3"):
+    source = source or Path(__file__).resolve().parent
+    assert target in ("esp32c3", "esp32s3"), "Unsupported fixture target"
     sdk = args.idf_path.resolve()
     python = args.python.resolve()
     tools = args.tools_path.resolve()
@@ -61,6 +62,8 @@ def build(args):
                 "sdk": revision,
                 "variant": args.variant,
                 "tag": args.build_tag,
+                "builder_sha256": sha(Path(__file__)),
+                "target": target,
             },
             sort_keys=True,
         ).encode()
@@ -69,10 +72,10 @@ def build(args):
     project = output / "project"
     project.mkdir()
     for name in ("CMakeLists.txt", "sdkconfig.defaults", "main/CMakeLists.txt", "main/main.c"):
-        target = project / name
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(source / name, target)
-    variant = ("normal", "hang", "panic").index(args.variant)
+        target_file = project / name
+        target_file.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source / name, target_file)
+    variant = ("normal", "hang", "panic", "missing-core1").index(args.variant)
     (project / "main/build_identity.h").write_text(
         f'#define SIM_BUILD_ID "{identity}"\n#define SIM_VARIANT {variant}\n', encoding="ascii"
     )
@@ -89,7 +92,8 @@ def build(args):
         PYTHONUTF8="1",
     )
     binaries = []
-    for executable in ("riscv32-esp-elf-gcc.exe", "cmake.exe", "ninja.exe"):
+    compiler = "xtensa-esp32s3-elf-gcc.exe" if target == "esp32s3" else "riscv32-esp-elf-gcc.exe"
+    for executable in (compiler, "cmake.exe", "ninja.exe"):
         paths = list((tools / "tools").rglob(executable))
         assert len(paths) == 1, f"Select one installed {executable}"
         binaries.append(paths[0].parent)
@@ -104,7 +108,7 @@ def build(args):
             str(project),
             "-B",
             str(output / "build"),
-            "-DIDF_TARGET=esp32c3",
+            "-DIDF_TARGET=" + target,
             "build",
         ],
         [
@@ -112,7 +116,7 @@ def build(args):
             "-m",
             "esptool",
             "--chip",
-            "esp32c3",
+            target,
             "merge_bin",
             "--output",
             str(output / "flash.bin"),
@@ -153,6 +157,8 @@ def build(args):
         "schema_version": "embedded-sim-runner.idf-fixture.v1",
         "sdk_version": "5.5.2",
         "sdk_commit": revision,
+        "target": target,
+        "builder_sha256": sha(Path(__file__)),
         "required_submodules": submodules,
         "source_sha256": source_hashes,
         "build_id": identity,
@@ -164,12 +170,17 @@ def build(args):
     print(json.dumps(manifest, indent=2))
 
 
-if __name__ == "__main__":
+def main(*, source=None, target="esp32c3"):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--idf-path", type=Path, required=True)
     parser.add_argument("--python", type=Path, required=True)
     parser.add_argument("--tools-path", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--variant", choices=("normal", "hang", "panic"), default="normal")
+    variants = ("normal", "hang", "panic") + (("missing-core1",) if target == "esp32s3" else ())
+    parser.add_argument("--variant", choices=variants, default="normal")
     parser.add_argument("--build-tag", default="a")
-    build(parser.parse_args())
+    build(parser.parse_args(), source=source, target=target)
+
+
+if __name__ == "__main__":
+    main()

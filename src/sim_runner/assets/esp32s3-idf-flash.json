@@ -1,0 +1,17 @@
+{
+  "profile": "esp32s3-idf-flash-v1",
+  "backend": "espressif-qemu-xtensa",
+  "machine": "esp32s3",
+  "flash_size": 4194304,
+  "boot": "pinned S3 rev0 ROM, ESP-IDF 5.5.2 second-stage bootloader, fixed factory partition",
+  "efuse": "fresh 1024 bytes, byte 38 = 12 (official IDF S3 revision 0.3 recipe), otherwise zero",
+  "ram_option": "fixed -m 32M follows IDF model recipe; fixture does not enable PSRAM",
+  "application": "ordered CPU0 and CPU1 fixture markers, READY, exact BUILD, consecutive UART heartbeats",
+  "time": "device clock unmeasured; no icount or enforced virtual budget; host timeout only",
+  "completion": "no panic, exact native assertions, unforced exit zero after guest restart request with -no-reboot",
+  "timer_watchdog": "QEMU timer.esp32s3.timg wdt_disable=true, not watchdog acceptance",
+  "diagnostics": "bounded exact Flash legacy-ID/SFDP/resume and Xtensa DSRSET debugger-query limitations; no other rejected MMIO permitted",
+  "persistent_storage": "private writable Flash/eFuse copies per run; original image unchanged",
+  "bridges": [],
+  "unverified": ["complete CPU/TIE instruction coverage", "multicore memory ordering and timing", "debugger attachment", "Flash ID/SFDP/suspend/resume", "PSRAM", "secure boot", "Flash encryption", "OTA", "RF", "USB", "electrical timing", "full peripheral coverage"]
+}
