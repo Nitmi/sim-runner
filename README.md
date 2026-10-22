@@ -1,7 +1,7 @@
 # sim-runner
 
 CLI for bounded firmware simulation and saved UART evidence. The published
-[0.5.0 release](https://github.com/Nitmi/sim-runner/releases/tag/v0.5.0)
+[0.6.0 release](https://github.com/Nitmi/sim-runner/releases/tag/v0.6.0)
 supports Windows x64 with five fixed profiles: Renode 1.17.0 nRF52840
 UART and [GPIO/TIMER0 IRQ](docs/nrf52840-gpio-timer.md), Espressif QEMU ESP32-C3
 RAM/UART and actual ESP-IDF 5.5.2 C3 Flash boot, plus the separate Xtensa
@@ -13,12 +13,14 @@ establish complete chip, PMP, Flash command, security or physical compatibility.
 The following Renode commands remain compatible; regenerate older plans with
 the current runner because plans bind the runner version.
 
-Current source is a local **0.6.0 candidate**, adding fixed
+Version **0.6.0** also adds fixed
 [GPIO/TIMER0 fault inputs](docs/nrf52840-gpio-fault.md): stuck input low/high,
 timer stop and masked timer IRQ, plus an explicit normal control. Independent
 paused model snapshots distinguish requested stimuli from observed effects.
 Fault injection never converts a failing normal regression to a passing result.
-HIL/Trace/Toolkit integration still selects the published 0.5.0 wheel.
+Published HIL Runner 0.7.0 and Embedded Trace 0.7.0 preserve these fault reports.
+Toolkit 0.30.0's local candidate selects this published combination; installed
+Toolkit 0.29.0 retains its earlier pinned combination.
 
 For QEMU setup, executable ELF constraints and reproducible smoke commands, see
 [ESP32-C3 profile](docs/esp32c3-qemu.md). It is direct RAM ELF execution, not an

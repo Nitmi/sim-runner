@@ -1,4 +1,4 @@
-# GPIO / TIMER0 model fault inputs (local 0.6.0 candidate)
+# GPIO / TIMER0 model fault inputs (0.6.0)
 
 `nrf52840-gpio-timer-fault-v1` adds an explicit, fixed fault selection to the
 Renode 1.17.0 [GPIO/TIMER0 scenario](nrf52840-gpio-timer.md). It reuses that
@@ -85,9 +85,10 @@ physical firmware identity. Process cleanup remains a separate recorded result.
 `scripts/accept_gpio_fault.py` runs two normal controls, all four faults, wrong
 BUILD and a bounded host timeout through an installed CLI. Native failures keep
 exit 1; the controller succeeds only when each declared expectation and cleanup
-matches. HIL 0.6.0, Trace 0.6.0 and Toolkit 0.29.0 still pin sim-runner 0.5.0 and
-do not accept this new schema/package. Native 0.6.0 remains a local candidate
-until a separate integration and release step.
+matches. Published HIL 0.7.0 and Trace 0.7.0 accept these reports and preserve
+their native verdicts. Toolkit 0.30.0's local candidate selects the published
+combination. Older HIL 0.6.0, Trace 0.6.0 and Toolkit 0.29.0 retain sim-runner
+0.5.0 and do not accept this new schema/package.
 
 Model source review: [fixed TIMER0 START/STOP, capture and INTEN implementation](https://github.com/renode/renode-infrastructure/blob/066a7f13c052215632d469c995c89aea37c573b1/src/Emulator/Peripherals/Peripherals/Timers/NRF52840_Timer.cs)
 and [fixed GPIO OnGPIO/IN implementation](https://github.com/renode/renode-infrastructure/blob/066a7f13c052215632d469c995c89aea37c573b1/src/Emulator/Peripherals/Peripherals/GPIOPort/NRF52840_GPIO.cs).
