@@ -39,6 +39,7 @@ RUNTIME_FILES = {
         "common.py",
         "flash_image.py",
         "gpio_timer.py",
+        "gpio_fault.py",
         "inspect.py",
         "plan.py",
         "process.py",

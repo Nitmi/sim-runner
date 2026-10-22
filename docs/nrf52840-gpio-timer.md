@@ -1,4 +1,4 @@
-# nRF52840 GPIO / TIMER0 profile (local 0.4.0 candidate)
+# nRF52840 GPIO / TIMER0 profile
 
 `nrf52840-gpio-timer-v1` runs a fixed digital scenario on the existing hash-bound
 Renode 1.17.0 Windows x64 runtime. It adds GPIO0, GPIO1, GPIOTE and TIMER0 to the
@@ -105,9 +105,9 @@ fabricate UART timer/vector claims; the runner is a regression tool, not an
 attestation of guest code semantics. Model GPIO snapshots verify state at four
 boundaries, not a complete waveform or every transient.
 
-HIL 0.4.0 / Trace 0.4.0 / Toolkit 0.27.0 currently pin sim-runner 0.3.0 and do not
-accept this new schema/inventory. Use native sim-runner until a separately tested
-integration update. No formal station or plugin switch is implied by this candidate.
+The published sim-runner 0.5.0, HIL 0.6.0, Trace 0.6.0 and Toolkit 0.29.0 support
+this nominal profile. The source-only 0.6.0 [fault profile](nrf52840-gpio-fault.md)
+is separate and is not yet included in those integration pins.
 
 Source references used for this runtime:
 

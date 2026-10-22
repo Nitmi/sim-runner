@@ -4,7 +4,17 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from .backend import check_logs
-from .common import FLAGS, SimError, bound, file_record, payload, require, sha, write_json
+from .common import (
+    FLAGS,
+    AssertionFailure,
+    SimError,
+    bound,
+    file_record,
+    payload,
+    require,
+    sha,
+    write_json,
+)
 from .plan import ASSETS, evaluate, load_plan, runtime
 from .process import execute
 
@@ -99,6 +109,8 @@ def run(plan_path: Path, expected: str, directory: Path, *, profile=None) -> dic
             else profile.evaluate(uart, plan["assertions"], stdout)
         )
     except (SimError, OSError, UnicodeError) as error:
+        if isinstance(error, AssertionFailure):
+            assertion_result = error.evidence
         errors.append({"code": getattr(error, "code", "EVIDENCE_INVALID"), "message": str(error)})
     try:
         runtime(lock_path, plan["runtime_lock"]["sha256"])

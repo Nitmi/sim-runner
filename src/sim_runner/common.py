@@ -20,6 +20,14 @@ class SimError(Exception):
         self.code = code
 
 
+class AssertionFailure(SimError):
+    """A failed native assertion with bounded, parsed diagnostic evidence."""
+
+    def __init__(self, message: str, evidence: dict):
+        super().__init__("ASSERTION_FAILED", message)
+        self.evidence = evidence
+
+
 def require(condition, message, code="INVALID_INPUT"):
     if not condition:
         raise SimError(code, message)

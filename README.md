@@ -13,6 +13,13 @@ establish complete chip, PMP, Flash command, security or physical compatibility.
 The following Renode commands remain compatible; regenerate older plans with
 the current runner because plans bind the runner version.
 
+Current source is a local **0.6.0 candidate**, adding fixed
+[GPIO/TIMER0 fault inputs](docs/nrf52840-gpio-fault.md): stuck input low/high,
+timer stop and masked timer IRQ, plus an explicit normal control. Independent
+paused model snapshots distinguish requested stimuli from observed effects.
+Fault injection never converts a failing normal regression to a passing result.
+HIL/Trace/Toolkit integration still selects the published 0.5.0 wheel.
+
 For QEMU setup, executable ELF constraints and reproducible smoke commands, see
 [ESP32-C3 profile](docs/esp32c3-qemu.md). It is direct RAM ELF execution, not an
 ESP-IDF flash-boot or ESP32-S3 profile. Use `--backend espressif-qemu` on doctor

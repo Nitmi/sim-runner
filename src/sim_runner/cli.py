@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import __version__, gpio_timer, qemu, qemu_flash, qemu_s3
+from . import __version__, gpio_fault, gpio_timer, qemu, qemu_flash, qemu_s3
 from .common import FLAGS, SimError, bound, decode, file_record, require, write_json
 from .inspect import inspect_report
 from .plan import load_plan, make_plan, runtime
@@ -37,10 +37,16 @@ def main(argv=None):
         choices=(
             "nrf52840-uart-v1",
             gpio_timer.PROFILE,
+            gpio_fault.PROFILE,
             qemu.PROFILE,
             qemu_flash.PROFILE,
             qemu_s3.PROFILE,
         ),
+    )
+    plan.add_argument(
+        "--fault",
+        choices=gpio_fault.FAULTS,
+        help="required only for the fixed GPIO fault profile; none is its normal control",
     )
     plan.add_argument("--firmware", type=Path, required=True)
     plan.add_argument("--firmware-sha256", required=True)
@@ -83,6 +89,10 @@ def main(argv=None):
                 "runtime_files": len(info["files"]),
             }
         elif args.operation == "plan":
+            require(
+                (args.fault is not None) == (args.profile == gpio_fault.PROFILE),
+                "--fault is required only for the GPIO fault profile",
+            )
             common = (
                 args.runtime_lock,
                 args.runtime_sha256,
@@ -91,7 +101,7 @@ def main(argv=None):
                 args.ready_line,
                 args.build_line,
                 args.heartbeat_prefix,
-                (16 if args.profile == gpio_timer.PROFILE else 3)
+                (16 if args.profile in (gpio_timer.PROFILE, gpio_fault.PROFILE) else 3)
                 if args.min_heartbeats is None
                 else args.min_heartbeats,
             )
@@ -117,11 +127,18 @@ def main(argv=None):
                 result = planner(*common, args.timeout, args.output_limit, args.memory_mib)
             else:
                 require(
-                    args.profile in (None, "nrf52840-uart-v1", gpio_timer.PROFILE),
+                    args.profile
+                    in (None, "nrf52840-uart-v1", gpio_timer.PROFILE, gpio_fault.PROFILE),
                     "profile/backend differ",
                 )
-                planner = gpio_timer.make_plan if args.profile == gpio_timer.PROFILE else make_plan
-                default_ms = 82 if args.profile == gpio_timer.PROFILE else 250
+                planner = (
+                    gpio_fault.FaultProfile(args.fault).make_plan
+                    if args.profile == gpio_fault.PROFILE
+                    else gpio_timer.make_plan
+                    if args.profile == gpio_timer.PROFILE
+                    else make_plan
+                )
+                default_ms = 82 if args.profile in (gpio_timer.PROFILE, gpio_fault.PROFILE) else 250
                 result = planner(
                     *common,
                     default_ms if args.virtual_ms is None else args.virtual_ms,
@@ -144,6 +161,7 @@ def main(argv=None):
                 qemu_flash.PLAN_SCHEMA: qemu_flash.load_plan,
                 qemu_s3.PLAN_SCHEMA: qemu_s3.load_plan,
                 gpio_timer.PLAN_SCHEMA: gpio_timer.load_plan,
+                gpio_fault.PLAN_SCHEMA: gpio_fault.load_plan,
             }.get(schema, load_plan)
             result = loader(args.plan, args.sha256)
             result = {
@@ -159,6 +177,7 @@ def main(argv=None):
                 qemu.REPORT_SCHEMA: qemu.inspect_report,
                 qemu_flash.REPORT_SCHEMA: qemu_flash.inspect_report,
                 qemu_s3.REPORT_SCHEMA: qemu_s3.inspect_report,
+                gpio_fault.REPORT_SCHEMA: gpio_fault.inspect_report,
             }.get(schema, inspect_report)
             result = inspector(
                 args.report,
@@ -172,6 +191,7 @@ def main(argv=None):
                 qemu.PLAN_SCHEMA: qemu.run,
                 qemu_flash.PLAN_SCHEMA: qemu_flash.run,
                 qemu_s3.PLAN_SCHEMA: qemu_s3.run,
+                gpio_fault.PLAN_SCHEMA: gpio_fault.run,
             }.get(schema, run)
             result = runner(
                 args.plan,
