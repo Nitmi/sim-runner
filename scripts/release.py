@@ -38,6 +38,7 @@ RUNTIME_FILES = {
         "cli.py",
         "common.py",
         "flash_image.py",
+        "esp_wasm.py",
         "gpio_timer.py",
         "gpio_fault.py",
         "inspect.py",
@@ -53,6 +54,8 @@ RUNTIME_FILES = {
         "assets/esp32c3-uart.json",
         "assets/esp32c3-idf-flash.json",
         "assets/esp32s3-idf-flash.json",
+        "assets/esp32c3-esp-wasm.json",
+        "assets/esp_wasm_runner.mjs",
     )
 }
 

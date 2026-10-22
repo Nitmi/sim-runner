@@ -25,6 +25,19 @@ def test_normal_exit_and_binary_capture(tmp_path):
     assert result["cleanup"]["capture_threads_stopped"]
 
 
+def test_node_environment_drops_preload_and_search_options(tmp_path, monkeypatch):
+    monkeypatch.setenv("NODE_OPTIONS", "--import=never-load-untrusted-code")
+    monkeypatch.setenv("NODE_PATH", "never-search-this-directory")
+    monkeypatch.setenv("NODE_REPL_EXTERNAL_MODULE", "never-load-this-module")
+    code = (
+        "import os,json;print(json.dumps([os.environ.get(k) for k in "
+        "('NODE_OPTIONS','NODE_PATH','NODE_REPL_EXTERNAL_MODULE')]))"
+    )
+    result = execute([sys.executable, "-c", code], tmp_path, 10, 4096, 512, node_environment=True)
+    assert result["error"] is None and result["exit_code"] == 0
+    assert (tmp_path / "backend.stdout.bin").read_bytes().strip() == b"[null, null, null]"
+
+
 def test_timeout_kills_owned_tree_including_grandchild(tmp_path):
     code = (
         "import subprocess,sys,time;"

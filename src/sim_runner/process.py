@@ -10,7 +10,15 @@ from .common import SimError, require
 from .winjob import Job
 
 
-def execute(command: list[str], directory: Path, timeout: int, limit: int, memory_mib: int) -> dict:
+def execute(
+    command: list[str],
+    directory: Path,
+    timeout: int,
+    limit: int,
+    memory_mib: int,
+    *,
+    node_environment: bool = False,
+) -> dict:
     """Public run paths supply only fixed, audited emulator commands."""
     require(os.name == "nt", "execution requires Windows x64", "UNSUPPORTED_PLATFORM")
     job = Job(memory_mib)
@@ -44,6 +52,9 @@ def execute(command: list[str], directory: Path, timeout: int, limit: int, memor
 
     try:
         environment = dict(os.environ)
+        if node_environment:
+            for key in ("NODE_OPTIONS", "NODE_PATH", "NODE_REPL_EXTERNAL_MODULE"):
+                environment.pop(key, None)
         # Direct supported host caches/temporaries to this run and disable shared
         # Renode cache/config writes. This is lifecycle isolation, not a sandbox.
         for key in (

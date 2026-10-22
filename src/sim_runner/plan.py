@@ -41,6 +41,10 @@ def inventory(root: Path) -> set[str]:
 
 
 def runtime(lock: Path, expected: str, backend: str = "renode") -> dict:
+    if backend == "espressif-esp-emulator-wasm":
+        from . import esp_wasm
+
+        return esp_wasm.runtime(lock, expected)
     value = decode(bound(lock, expected, 4 * 1024 * 1024))
     require(isinstance(value, dict), "runtime lock must be an object")
     require(

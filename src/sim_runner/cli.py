@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import __version__, gpio_fault, gpio_timer, qemu, qemu_flash, qemu_s3
+from . import __version__, esp_wasm, gpio_fault, gpio_timer, qemu, qemu_flash, qemu_s3
 from .common import FLAGS, SimError, bound, decode, file_record, require, write_json
 from .inspect import inspect_report
 from .plan import load_plan, make_plan, runtime
@@ -14,7 +14,7 @@ from .run import run
 
 def main(argv=None):
     parser = argparse.ArgumentParser(
-        description="Bounded Renode/Espressif QEMU simulation; no hardware access"
+        description="Bounded Renode/QEMU/experimental ESP-EMU simulation; no hardware access"
     )
     parser.add_argument("--version", action="version", version=f"sim-runner {__version__}")
     commands = parser.add_subparsers(dest="operation", required=True)
@@ -22,7 +22,9 @@ def main(argv=None):
     doctor.add_argument("--runtime-lock", type=Path, required=True)
     doctor.add_argument("--runtime-sha256", required=True)
     doctor.add_argument(
-        "--backend", choices=("renode", qemu.BACKEND, qemu_s3.BACKEND), default="renode"
+        "--backend",
+        choices=("renode", qemu.BACKEND, qemu_s3.BACKEND, esp_wasm.BACKEND),
+        default="renode",
     )
     plan = commands.add_parser(
         "plan", help="prepare an offline plan; no per-run confirmation needed"
@@ -30,7 +32,9 @@ def main(argv=None):
     plan.add_argument("--runtime-lock", type=Path, required=True)
     plan.add_argument("--runtime-sha256", required=True)
     plan.add_argument(
-        "--backend", choices=("renode", qemu.BACKEND, qemu_s3.BACKEND), default="renode"
+        "--backend",
+        choices=("renode", qemu.BACKEND, qemu_s3.BACKEND, esp_wasm.BACKEND),
+        default="renode",
     )
     plan.add_argument(
         "--profile",
@@ -41,6 +45,7 @@ def main(argv=None):
             qemu.PROFILE,
             qemu_flash.PROFILE,
             qemu_s3.PROFILE,
+            esp_wasm.PROFILE,
         ),
     )
     plan.add_argument(
@@ -64,6 +69,9 @@ def main(argv=None):
     plan.add_argument("--timeout", type=int, default=30)
     plan.add_argument("--output-limit", type=int, default=1048576)
     plan.add_argument("--memory-mib", type=int, default=1024)
+    plan.add_argument(
+        "--instruction-budget", type=int, help="ESP-EMU WASM only; defaults to 50000000"
+    )
     plan.add_argument("--output", type=Path, required=True)
     for operation in ("inspect-plan", "run"):
         command = commands.add_parser(operation)
@@ -90,6 +98,10 @@ def main(argv=None):
             }
         elif args.operation == "plan":
             require(
+                args.instruction_budget is None or args.backend == esp_wasm.BACKEND,
+                "instruction budget is only supported by ESP-EMU WASM",
+            )
+            require(
                 (args.fault is not None) == (args.profile == gpio_fault.PROFILE),
                 "--fault is required only for the GPIO fault profile",
             )
@@ -105,7 +117,19 @@ def main(argv=None):
                 if args.min_heartbeats is None
                 else args.min_heartbeats,
             )
-            if args.backend in (qemu.BACKEND, qemu_s3.BACKEND):
+            if args.backend == esp_wasm.BACKEND:
+                require(
+                    args.virtual_ms is None and args.profile in (None, esp_wasm.PROFILE),
+                    "profile/backend or time budget differ",
+                )
+                result = esp_wasm.make_plan(
+                    *common,
+                    args.timeout,
+                    args.output_limit,
+                    args.memory_mib,
+                    50000000 if args.instruction_budget is None else args.instruction_budget,
+                )
+            elif args.backend in (qemu.BACKEND, qemu_s3.BACKEND):
                 require(
                     args.virtual_ms is None, "QEMU profile does not enforce a virtual-time budget"
                 )
@@ -162,6 +186,7 @@ def main(argv=None):
                 qemu_s3.PLAN_SCHEMA: qemu_s3.load_plan,
                 gpio_timer.PLAN_SCHEMA: gpio_timer.load_plan,
                 gpio_fault.PLAN_SCHEMA: gpio_fault.load_plan,
+                esp_wasm.PLAN_SCHEMA: esp_wasm.load_plan,
             }.get(schema, load_plan)
             result = loader(args.plan, args.sha256)
             result = {
@@ -178,6 +203,7 @@ def main(argv=None):
                 qemu_flash.REPORT_SCHEMA: qemu_flash.inspect_report,
                 qemu_s3.REPORT_SCHEMA: qemu_s3.inspect_report,
                 gpio_fault.REPORT_SCHEMA: gpio_fault.inspect_report,
+                esp_wasm.REPORT_SCHEMA: esp_wasm.inspect_report,
             }.get(schema, inspect_report)
             result = inspector(
                 args.report,
@@ -192,6 +218,7 @@ def main(argv=None):
                 qemu_flash.PLAN_SCHEMA: qemu_flash.run,
                 qemu_s3.PLAN_SCHEMA: qemu_s3.run,
                 gpio_fault.PLAN_SCHEMA: gpio_fault.run,
+                esp_wasm.PLAN_SCHEMA: esp_wasm.run,
             }.get(schema, run)
             result = runner(
                 args.plan,

@@ -13,14 +13,20 @@ establish complete chip, PMP, Flash command, security or physical compatibility.
 The following Renode commands remain compatible; regenerate older plans with
 the current runner because plans bind the runner version.
 
+Current source is a local **0.7.0 candidate**, adding an experimental
+[ESP-EMU 0.50.0 WASM / ESP32-C3 Flash profile](docs/esp-emulator-wasm.md).
+It uses the exact official WASM bundle and hash-bound Node 24.15.0 on Windows;
+no browser, WSL, network proxy or hardware bridge is started. Its UART API returns
+strings, and successful runs remain `passed_with_model_limits`. Existing native
+profiles remain separate. HIL/Trace/Toolkit do not yet accept the new package/schema.
+
 Version **0.6.0** also adds fixed
 [GPIO/TIMER0 fault inputs](docs/nrf52840-gpio-fault.md): stuck input low/high,
 timer stop and masked timer IRQ, plus an explicit normal control. Independent
 paused model snapshots distinguish requested stimuli from observed effects.
 Fault injection never converts a failing normal regression to a passing result.
 Published HIL Runner 0.7.0 and Embedded Trace 0.7.0 preserve these fault reports.
-Toolkit 0.30.0's local candidate selects this published combination; installed
-Toolkit 0.29.0 retains its earlier pinned combination.
+Published Toolkit 0.30.0 selects this combination independently of the new local candidate.
 
 For QEMU setup, executable ELF constraints and reproducible smoke commands, see
 [ESP32-C3 profile](docs/esp32c3-qemu.md). It is direct RAM ELF execution, not an

@@ -1,0 +1,20 @@
+{
+  "backend": "espressif-esp-emulator-wasm",
+  "version": "0.50.0",
+  "archive": "esp-emu-0.50.0-wasm.tar.gz",
+  "archive_sha256": "ecaf1bed6c085434fd119c320ea2dab5c1890bada7675cea4b1c15e240ec8001",
+  "node_version": "24.15.0",
+  "chip": "esp32c3",
+  "files": {
+    "www/pkg/.gitignore": "684888c0ebb17f374298b65ee2807526c066094c701bcc7ebbe1c1095f494fc1",
+    "www/pkg/esp_emu.js": "20ea33a0d75e7ee781356d7886ac0ce9e757da0d16ca57b26398c6663ec827d3",
+    "www/pkg/esp_emu_bg.wasm": "615f1719394cd3454eb50fd6ff97fc58f99a8f79dd5eeb138c96c08a4d869e0c",
+    "www/pkg/package.json": "f7f51512816bf8a1b214bab856c4d24c136aea8abd728a8654a6502d5f425e70",
+    "www/pkg/README.md": "fb5eb4ed028693a58f94a226c2091ae36379c19a63c19784ab4787847d9284e1",
+    "www/pkg/LICENSE": "2479c504896f5ab5ec061a0faf44ddb18411694ec69bb6294c01cc0d619db3ed",
+    "www/serve.py": "99a5b213b581c522dd2ae5b2a8fdd528b4e21dc60f2dad88ff631221302a2bdd",
+    "www/worker.js": "7b080d23065efeb8dbd6e8740456de4974b0ea47938e7bd3ea2d4a3d93c9b536",
+    "www/index.html": "44ee3adde2c4370bf39a5d0cc3a32974a143fb1b1d5c0c0c89d43b662ef11c4f",
+    "www/app.js": "7956cbc61bca10c614ef9b1c198ff597a858d498cb705d6a263a13e2732a098d"
+  }
+}

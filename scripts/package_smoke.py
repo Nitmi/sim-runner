@@ -158,7 +158,7 @@ def main() -> None:
             if item.filename.startswith("sim_runner/") and not item.is_dir():
                 assert (package.parent / item.filename).read_bytes() == archive.read(item)
                 verified += 1
-    assert verified == 21, "Expected 16 modules and five fixed model assets"
+    assert verified == 24, "Expected 17 modules and seven fixed model/host assets"
     report = {
         "ok": True,
         "version": version,
