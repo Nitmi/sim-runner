@@ -1,8 +1,8 @@
 # Source-bound releases
 
-Version [0.5.0](https://github.com/Nitmi/sim-runner/releases/tag/v0.5.0) is
+Version [0.7.0](https://github.com/Nitmi/sim-runner/releases/tag/v0.7.0) is
 published with verified build provenance for all four assets. The source tag
-binds commit `b6e463df30c73e6cf5d81597bfda0c7af5c02baf`. The workflows prepare
+binds commit `c3e5d9bfe831393de28b9c4ef7eb868259986e52`. The workflows prepare
 artifacts and provenance; GitHub Release creation remains a separate action.
 
 ## Local preparation
@@ -24,7 +24,7 @@ uv run --locked python scripts/package_smoke.py --dist-dir D:/work/sim-release-a
 
 Each build produces exactly a wheel, source archive, release-manifest.json and
 SHA256SUMS. The verifier reads bounded archives in memory, checks wheel RECORD,
-the 20 fixed runtime/model files, entry points, package identity and absence of
+the 24 fixed runtime/model/host files, entry points, package identity and absence of
 runtime dependencies. It compares wheel code and models with the source archive.
 The builder additionally compares every source archive member with the clean
 Git commit. All four output files must match between builds.
@@ -33,7 +33,7 @@ The smoke helper creates a fresh environment, installs only the exact wheel with
 --no-index/--no-deps, verifies installed files and the CLI launcher, and exercises
 offline doctor/plan/inspect plus hash and input-drift rejection with synthetic
 files. An audit hook prohibits subprocess creation inside those offline CLI
-calls. It never executes the synthetic runtime or starts Renode/QEMU.
+calls. It never executes the synthetic runtime or starts Renode/QEMU/ESP-EMU.
 
 ## CI and provenance
 
@@ -57,7 +57,7 @@ GitHub Release. Verification should constrain repository, source ref, source
 digest, signer workflow/digest and GitHub-hosted runners, for example:
 
 ```powershell
-gh attestation verify embedded_sim_runner-0.5.0-py3-none-any.whl --repo Nitmi/sim-runner --source-ref refs/tags/v0.5.0 --source-digest <commit> --signer-workflow Nitmi/sim-runner/.github/workflows/python-release.yml --signer-digest <commit> --deny-self-hosted-runners
+gh attestation verify embedded_sim_runner-0.7.0-py3-none-any.whl --repo Nitmi/sim-runner --source-ref refs/tags/v0.7.0 --source-digest <commit> --signer-workflow Nitmi/sim-runner/.github/workflows/python-release.yml --signer-digest <commit> --deny-self-hosted-runners
 ```
 
 Repeat verification for the source archive, manifest and checksum file. Local

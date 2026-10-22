@@ -1,8 +1,8 @@
 # sim-runner
 
 CLI for bounded firmware simulation and saved UART evidence. The published
-[0.6.0 release](https://github.com/Nitmi/sim-runner/releases/tag/v0.6.0)
-supports Windows x64 with five fixed profiles: Renode 1.17.0 nRF52840
+[0.7.0 release](https://github.com/Nitmi/sim-runner/releases/tag/v0.7.0)
+supports Windows x64 with fixed profiles: Renode 1.17.0 nRF52840
 UART and [GPIO/TIMER0 IRQ](docs/nrf52840-gpio-timer.md), Espressif QEMU ESP32-C3
 RAM/UART and actual ESP-IDF 5.5.2 C3 Flash boot, plus the separate Xtensa
 [ESP32-S3 Flash/dual-core UART profile](docs/esp32s3-qemu.md).
@@ -13,12 +13,14 @@ establish complete chip, PMP, Flash command, security or physical compatibility.
 The following Renode commands remain compatible; regenerate older plans with
 the current runner because plans bind the runner version.
 
-Current source is a local **0.7.0 candidate**, adding an experimental
+Release **0.7.0** adds an experimental
 [ESP-EMU 0.50.0 WASM / ESP32-C3 Flash profile](docs/esp-emulator-wasm.md).
 It uses the exact official WASM bundle and hash-bound Node 24.15.0 on Windows;
 no browser, WSL, network proxy or hardware bridge is started. Its UART API returns
 strings, and successful runs remain `passed_with_model_limits`. Existing native
-profiles remain separate. HIL/Trace/Toolkit do not yet accept the new package/schema.
+profiles remain separate. Published HIL Runner 0.8.0 and Embedded Trace 0.8.0
+support this schema; Toolkit 0.31.0 has an explicit local candidate route.
+Published Toolkit 0.30.0 still selects the prior component combination.
 
 Version **0.6.0** also adds fixed
 [GPIO/TIMER0 fault inputs](docs/nrf52840-gpio-fault.md): stuck input low/high,

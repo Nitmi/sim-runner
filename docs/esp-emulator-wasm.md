@@ -1,6 +1,6 @@
 # Experimental ESP-EMU WASM / ESP32-C3 Flash profile
 
-Local sim-runner 0.7.0 adds backend `espressif-esp-emulator-wasm`, profile
+sim-runner 0.7.0 adds backend `espressif-esp-emulator-wasm`, profile
 `esp32c3-wasm-flash-v1`. It runs the official ESP-EMU **0.50.0** WASM distribution
 inside a hash-bound **Node 24.15.0** process on Windows x64. It is separate from
 Espressif QEMU, a browser session and a native Windows ESP-EMU binary. This does
