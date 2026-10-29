@@ -13,6 +13,12 @@ establish complete chip, PMP, Flash command, security or physical compatibility.
 The following Renode commands remain compatible; regenerate older plans with
 the current runner because plans bind the runner version.
 
+Local candidate **0.8.0** adds a fixed
+[TWI0/TMP103 sensor regression](docs/nrf52840-i2c-sensor.md): signed temperature
+reads, four independent model snapshots, and frozen/offset fault stimuli.
+It does not model electrical I2C or sensor accuracy. This schema is not yet
+integrated into HIL/Trace or selected by the published Toolkit.
+
 Release **0.7.0** adds an experimental
 [ESP-EMU 0.50.0 WASM / ESP32-C3 Flash profile](docs/esp-emulator-wasm.md).
 It uses the exact official WASM bundle and hash-bound Node 24.15.0 on Windows;

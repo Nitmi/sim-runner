@@ -99,7 +99,7 @@ def inspect_report(path: Path, expected: str, *, profile=None) -> dict:
             and report.get("virtual_time")
             == {
                 "domain": "renode_emulation",
-                "requested_ms": 82,
+                "requested_ms": profile.VIRTUAL_MS,
                 "completed": report["virtual_time"].get("completed"),
             }
             and type(report["virtual_time"]["completed"]) is bool,

@@ -3,7 +3,11 @@
 Use Python 3.11+ with no runtime dependencies. Keep simulation evidence distinct
 from physical board acceptance. This project never discovers or opens hardware.
 Use only fixed, audited profiles: Renode nRF52840 UART / GPIO-TIMER0 (including
-explicit bounded model-fault controls) or Espressif QEMU
+explicit bounded model-fault controls) or fixed TWI0/TMP103 signed-temperature
+reads with paused model snapshots and explicit frozen/offset faults.
+These sensor controls do not model electrical
+I2C, NACK/disconnect, conversion delay, calibration or physical accuracy. Use
+Renode 1.17 source semantics, not a newer model's registers. Espressif QEMU covers
 ESP32-C3 RAM/UART or the bounded ESP-IDF C3/S3 Flash/UART profiles, or the
 experimental fixed ESP32-C3 ESP-EMU 0.50.0 WASM/Node profile. The latter has no
 browser, network or physical bridge; its UTF-8 UART strings and opaque built-in

@@ -1,0 +1,27 @@
+// Fixed Renode 1.17 TWI0/TMP103 integer-temperature scenario; no SVD or bridges.
+nvic: IRQControllers.NVIC @ sysbus 0xE000E000
+    -> cpu@0
+
+cpu: CPU.CortexM @ sysbus
+    cpuType: "cortex-m4"
+    nvic: nvic
+    PerformanceInMips: 100
+
+flash: Memory.MappedMemory @ sysbus 0x0
+    size: 0x100000
+
+ram: Memory.MappedMemory @ sysbus 0x20000000
+    size: 0x40000
+
+uart0: UART.NRF52840_UART @ sysbus 0x40002000
+    easyDMA: false
+    -> nvic@2
+
+twi0: I2C.NRF52840_I2C @ sysbus 0x40003000
+    -> nvic@3
+
+temperature: Sensors.TMP103 @ twi0 0x48
+
+timer0: Timers.NRF52840_Timer @ sysbus 0x40008000
+    numberOfEvents: 4
+    -> nvic@8

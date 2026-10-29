@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 
-from . import __version__, esp_wasm, gpio_fault, gpio_timer, qemu, qemu_flash, qemu_s3
+from . import __version__, esp_wasm, gpio_fault, gpio_timer, qemu, qemu_flash, qemu_s3, sensor
 from .common import FLAGS, SimError, bound, decode, file_record, require, write_json
 from .inspect import inspect_report
 from .plan import load_plan, make_plan, runtime
@@ -42,6 +42,7 @@ def main(argv=None):
             "nrf52840-uart-v1",
             gpio_timer.PROFILE,
             gpio_fault.PROFILE,
+            sensor.PROFILE,
             qemu.PROFILE,
             qemu_flash.PROFILE,
             qemu_s3.PROFILE,
@@ -50,8 +51,8 @@ def main(argv=None):
     )
     plan.add_argument(
         "--fault",
-        choices=gpio_fault.FAULTS,
-        help="required only for the fixed GPIO fault profile; none is its normal control",
+        choices=tuple(dict.fromkeys((*gpio_fault.FAULTS, *sensor.FAULTS))),
+        help="required for GPIO fault and I2C sensor profiles; none is the nominal control",
     )
     plan.add_argument("--firmware", type=Path, required=True)
     plan.add_argument("--firmware-sha256", required=True)
@@ -61,10 +62,10 @@ def main(argv=None):
     plan.add_argument(
         "--min-heartbeats",
         type=int,
-        help="defaults to 3; GPIO profile requires/defaults to 16 IRQ samples",
+        help="defaults to 3; GPIO/sensor profiles require/default to 16 IRQ samples",
     )
     plan.add_argument(
-        "--virtual-ms", type=int, help="Renode only; defaults to 250 ms (GPIO: fixed 82)"
+        "--virtual-ms", type=int, help="Renode only; defaults to 250 ms (GPIO/sensor: fixed 82)"
     )
     plan.add_argument("--timeout", type=int, default=30)
     plan.add_argument("--output-limit", type=int, default=1048576)
@@ -102,8 +103,8 @@ def main(argv=None):
                 "instruction budget is only supported by ESP-EMU WASM",
             )
             require(
-                (args.fault is not None) == (args.profile == gpio_fault.PROFILE),
-                "--fault is required only for the GPIO fault profile",
+                (args.fault is not None) == (args.profile in (gpio_fault.PROFILE, sensor.PROFILE)),
+                "--fault is required only for the GPIO fault or I2C sensor profile",
             )
             common = (
                 args.runtime_lock,
@@ -113,7 +114,11 @@ def main(argv=None):
                 args.ready_line,
                 args.build_line,
                 args.heartbeat_prefix,
-                (16 if args.profile in (gpio_timer.PROFILE, gpio_fault.PROFILE) else 3)
+                (
+                    16
+                    if args.profile in (gpio_timer.PROFILE, gpio_fault.PROFILE, sensor.PROFILE)
+                    else 3
+                )
                 if args.min_heartbeats is None
                 else args.min_heartbeats,
             )
@@ -152,17 +157,29 @@ def main(argv=None):
             else:
                 require(
                     args.profile
-                    in (None, "nrf52840-uart-v1", gpio_timer.PROFILE, gpio_fault.PROFILE),
+                    in (
+                        None,
+                        "nrf52840-uart-v1",
+                        gpio_timer.PROFILE,
+                        gpio_fault.PROFILE,
+                        sensor.PROFILE,
+                    ),
                     "profile/backend differ",
                 )
                 planner = (
-                    gpio_fault.FaultProfile(args.fault).make_plan
+                    sensor.SensorProfile(args.fault).make_plan
+                    if args.profile == sensor.PROFILE
+                    else gpio_fault.FaultProfile(args.fault).make_plan
                     if args.profile == gpio_fault.PROFILE
                     else gpio_timer.make_plan
                     if args.profile == gpio_timer.PROFILE
                     else make_plan
                 )
-                default_ms = 82 if args.profile in (gpio_timer.PROFILE, gpio_fault.PROFILE) else 250
+                default_ms = (
+                    82
+                    if args.profile in (gpio_timer.PROFILE, gpio_fault.PROFILE, sensor.PROFILE)
+                    else 250
+                )
                 result = planner(
                     *common,
                     default_ms if args.virtual_ms is None else args.virtual_ms,
@@ -186,6 +203,7 @@ def main(argv=None):
                 qemu_s3.PLAN_SCHEMA: qemu_s3.load_plan,
                 gpio_timer.PLAN_SCHEMA: gpio_timer.load_plan,
                 gpio_fault.PLAN_SCHEMA: gpio_fault.load_plan,
+                sensor.PLAN_SCHEMA: sensor.load_plan,
                 esp_wasm.PLAN_SCHEMA: esp_wasm.load_plan,
             }.get(schema, load_plan)
             result = loader(args.plan, args.sha256)
@@ -203,6 +221,7 @@ def main(argv=None):
                 qemu_flash.REPORT_SCHEMA: qemu_flash.inspect_report,
                 qemu_s3.REPORT_SCHEMA: qemu_s3.inspect_report,
                 gpio_fault.REPORT_SCHEMA: gpio_fault.inspect_report,
+                sensor.REPORT_SCHEMA: sensor.inspect_report,
                 esp_wasm.REPORT_SCHEMA: esp_wasm.inspect_report,
             }.get(schema, inspect_report)
             result = inspector(
@@ -218,6 +237,7 @@ def main(argv=None):
                 qemu_flash.PLAN_SCHEMA: qemu_flash.run,
                 qemu_s3.PLAN_SCHEMA: qemu_s3.run,
                 gpio_fault.PLAN_SCHEMA: gpio_fault.run,
+                sensor.PLAN_SCHEMA: sensor.run,
                 esp_wasm.PLAN_SCHEMA: esp_wasm.run,
             }.get(schema, run)
             result = runner(

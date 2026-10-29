@@ -143,6 +143,37 @@ def main() -> None:
     saved = plan.read_bytes()
     inspected = offline("inspect", ["inspect-plan", "--plan", str(plan), "--sha256", digest(plan)])
     assert inspected["profile"] == "nrf52840-uart-v1"
+    # Fixed sensor model assets must also work from the wheel, without any backend launch.
+    for fault in ("none", "temperature-stuck", "temperature-offset"):
+        sensor_plan = root / (fault + ".plan.json")
+        offline(
+            "sensor-plan-" + fault,
+            [
+                "plan",
+                *common,
+                "--profile",
+                "nrf52840-i2c-sensor-v1",
+                "--fault",
+                fault,
+                "--firmware",
+                str(firmware),
+                "--firmware-sha256",
+                digest(firmware),
+                "--ready-line",
+                "SYNTHETIC_READY",
+                "--build-line",
+                "SYNTHETIC_BUILD",
+                "--heartbeat-prefix",
+                "SYNTHETIC_SAMPLE",
+                "--output",
+                str(sensor_plan),
+            ],
+        )
+        checked = offline(
+            "sensor-inspect-" + fault,
+            ["inspect-plan", "--plan", str(sensor_plan), "--sha256", digest(sensor_plan)],
+        )
+        assert checked["profile"] == "nrf52840-i2c-sensor-v1"
     assert not offline(
         "wrong-hash", ["inspect-plan", "--plan", str(plan), "--sha256", "0" * 64], 1
     )["ok"]
@@ -158,7 +189,7 @@ def main() -> None:
             if item.filename.startswith("sim_runner/") and not item.is_dir():
                 assert (package.parent / item.filename).read_bytes() == archive.read(item)
                 verified += 1
-    assert verified == 24, "Expected 17 modules and seven fixed model/host assets"
+    assert verified == 26, "Expected 18 modules and eight fixed model/host assets"
     report = {
         "ok": True,
         "version": version,
