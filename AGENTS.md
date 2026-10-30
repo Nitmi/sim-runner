@@ -8,6 +8,9 @@ reads with paused model snapshots and explicit frozen/offset faults.
 The fixed legacy SPI0/LM74 profile adds signed Q4 two-byte frames, frozen values
 and one monitor-byte frame-slip fault. It has no CS/electrical or clock-mode model;
 the frame-slip control is a model Transmit call, not a physical bus glitch.
+The fixed watchdog profile covers two reload channels, RUNSTATUS and model reset
+with TIMER0 feeding or fixed timer-stop/LimitTimer-disable faults. It does not
+cover CONFIG, sleep/halt, timeout IRQ, physical reset or protection guarantees.
 These sensor controls do not model electrical
 I2C, NACK/disconnect, conversion delay, calibration or physical accuracy. Use
 Renode 1.17 source semantics, not a newer model's registers. Espressif QEMU covers

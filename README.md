@@ -19,12 +19,20 @@ reads, four independent model snapshots, and frozen/offset fault stimuli.
 It does not model electrical I2C or sensor accuracy. Published HIL/Trace 0.13.0
 support this schema; Toolkit 0.36.1 selects sim 0.8.0 / HIL 0.13.0 / Trace 0.13.1.
 
-Local candidate **0.9.0** adds a separate
+Version **0.9.0** adds a separate
 [SPI0/LM74 signed-fractional sensor profile](docs/nrf52840-spi-sensor.md), with
 frozen-temperature and byte-frame-slip controls. Native model properties, guest
 raw words, signed Q4 values and normal regression verdicts remain separate.
 There is no SPI chip-select, clock-mode, electrical or accuracy qualification.
 The new schemas require explicit HIL/Trace integration before Toolkit adoption.
+
+Local candidate **0.10.0** adds a fixed
+[dual-channel watchdog regression](docs/nrf52840-watchdog.md). It checks both
+reload requests, model running state, TIMER0 IRQ samples and watchdog-triggered
+guest reboots. Fixed missed-feed and disabled-watchdog controls retain failed
+nominal verdicts. CONFIG sleep/halt, physical reset and protection guarantees
+remain outside coverage. Its distinct schemas require future HIL/Trace routing;
+Toolkit 0.37.0 and the workstation configuration remain unchanged.
 
 Release **0.7.0** adds an experimental
 [ESP-EMU 0.50.0 WASM / ESP32-C3 Flash profile](docs/esp-emulator-wasm.md).

@@ -1,0 +1,25 @@
+// Audited Renode 1.17 WDT running-state subset; no CONFIG/low-power model.
+nvic: IRQControllers.NVIC @ sysbus 0xE000E000
+    -> cpu@0
+
+cpu: CPU.CortexM @ sysbus
+    cpuType: "cortex-m4"
+    nvic: nvic
+    PerformanceInMips: 100
+
+flash: Memory.MappedMemory @ sysbus 0x0
+    size: 0x100000
+
+ram: Memory.MappedMemory @ sysbus 0x20000000
+    size: 0x40000
+
+uart0: UART.NRF52840_UART @ sysbus 0x40002000
+    easyDMA: false
+    -> nvic@2
+
+timer0: Timers.NRF52840_Timer @ sysbus 0x40008000
+    numberOfEvents: 4
+    -> nvic@8
+
+watchdog: Timers.NRF52840_Watchdog @ sysbus 0x40010000
+    -> nvic@16

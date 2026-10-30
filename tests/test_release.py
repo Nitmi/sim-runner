@@ -41,6 +41,7 @@ MODULES = (
     "run.py",
     "sensor.py",
     "spi_sensor.py",
+    "watchdog.py",
     "winjob.py",
 )
 ASSETS = (
@@ -48,6 +49,7 @@ ASSETS = (
     "nrf52840-gpio-timer.repl",
     "nrf52840-i2c-sensor.repl",
     "nrf52840-spi-sensor.repl",
+    "nrf52840-watchdog.repl",
     "esp32c3-uart.json",
     "esp32c3-idf-flash.json",
     "esp32s3-idf-flash.json",
@@ -127,7 +129,7 @@ def test_verify_binds_bytes_but_does_not_claim_publisher_authentication(tmp_path
     monkeypatch.setattr(release.subprocess, "run", forbidden)
     report = release.verify(tmp_path, REVISION)
     assert report["ok"] and report["source_revision"] == REVISION
-    assert report["wheel_members"] == 33 and report["source_members"] == 32
+    assert report["wheel_members"] == 35 and report["source_members"] == 34
     assert not report["executables_started"] and not report["hardware_access"]
     assert not report["publisher_authenticity_verified"]
     with pytest.raises(ValueError, match="Source revision differs"):

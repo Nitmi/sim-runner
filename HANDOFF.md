@@ -1,5 +1,47 @@
 # Handoff
 
+## 2026-10-30 — local 0.10.0 watchdog profile
+
+Branch `feat/nrf52840-watchdog`, based on published 0.9.0
+`dfb32653d44c40e6b43afa63bed2ed138cf416e6`. Adds a fixed Renode 1.17 running-state
+dual-RR watchdog profile with timer-stop and model-disable controls. See
+`docs/nrf52840-watchdog.md` for exact audited source, protocol and limitations.
+The distinct watchdog schemas need subsequent HIL/Trace integration. No remote
+writes, tags, releases, Toolkit/plugin/station/lock/PATH changes are in scope.
+
+Python 3.11/3.13 each pass 374 source tests; Ruff check/format, offline lock and
+diff checks pass. Final native nominal, two faults, wrong magic, missing RR1,
+never started, unmapped access and wrong BUILD are captured without retries.
+The two faults retain failed nominal verdicts and observed effects. Local
+package, cold-install and performance results are recorded outside Git in
+`D:/Code/tmp/sim-watchdog-0100-20261030`; use its final receipt for completion.
+
+Pitfalls and limits:
+
+- Renode's monitor warns on a machine reset if its reset macro is absent. The
+  exploratory timer-stop run preserved the real reboot but correctly failed
+  MODEL_COVERAGE_FAILED. Audit Monitor.ResetMachine and install a fixed macro
+  that only emits a callback marker; never filter/allowlist the warning, reload
+  firmware or request an extra reset. Preserve the original failed attempt.
+- WDT CONFIG sleep/halt is tagged only in 1.17. Do not access it or imply low
+  power qualification. This profile excludes timeout IRQ/two-cycle behavior.
+- Reload writes can set Value=1024 even when the model is disabled. Check
+  RUNSTATUS independently in both guest and paused model evidence.
+- The raw Rust reset entry has no BSS runtime initialization. Explicitly reset
+  sequence on every boot; do not infer clearing/retention of other RAM.
+- Runtime payload inventory grows from 28 to 30 files (35 wheel members).
+  Source tests explicitly select this checkout; old dev venvs contain copies of
+  earlier versions. Cold tests must assert installed import paths.
+- A multi-file apply_patch with one bad uv.lock context is atomic here: no
+  earlier edits applied. Resolve root package name embedded-sim-runner, not the
+  CLI name. Two exploratory relative reads used the workspace cwd by mistake;
+  no processes or writes resulted. Use absolute paths for cross-repo reads.
+
+Fixed reset callbacks and raw spans prove model consistency, not physical reset
+or authenticity. Keep the first failed capture separate from final qualified
+captures. Measure host startup/inventory cost separately from 82 virtual ms;
+the Job memory cap is not measured RSS or real-time performance.
+
 ## 2026-10-30 — local 0.9.0 SPI sensor profile
 
 Branch: `feat/nrf52840-spi-sensor`, based on published 0.8.0 source
