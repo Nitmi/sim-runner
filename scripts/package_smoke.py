@@ -144,15 +144,22 @@ def main() -> None:
     inspected = offline("inspect", ["inspect-plan", "--plan", str(plan), "--sha256", digest(plan)])
     assert inspected["profile"] == "nrf52840-uart-v1"
     # Fixed sensor model assets must also work from the wheel, without any backend launch.
-    for fault in ("none", "temperature-stuck", "temperature-offset"):
-        sensor_plan = root / (fault + ".plan.json")
+    for profile, fault in (
+        *(
+            ("nrf52840-i2c-sensor-v1", f)
+            for f in ("none", "temperature-stuck", "temperature-offset")
+        ),
+        *(("nrf52840-spi-sensor-v1", f) for f in ("none", "temperature-stuck", "frame-slip")),
+    ):
+        label = profile + "-" + fault
+        sensor_plan = root / (label + ".plan.json")
         offline(
-            "sensor-plan-" + fault,
+            "sensor-plan-" + label,
             [
                 "plan",
                 *common,
                 "--profile",
-                "nrf52840-i2c-sensor-v1",
+                profile,
                 "--fault",
                 fault,
                 "--firmware",
@@ -170,10 +177,10 @@ def main() -> None:
             ],
         )
         checked = offline(
-            "sensor-inspect-" + fault,
+            "sensor-inspect-" + label,
             ["inspect-plan", "--plan", str(sensor_plan), "--sha256", digest(sensor_plan)],
         )
-        assert checked["profile"] == "nrf52840-i2c-sensor-v1"
+        assert checked["profile"] == profile
     assert not offline(
         "wrong-hash", ["inspect-plan", "--plan", str(plan), "--sha256", "0" * 64], 1
     )["ok"]
@@ -189,7 +196,7 @@ def main() -> None:
             if item.filename.startswith("sim_runner/") and not item.is_dir():
                 assert (package.parent / item.filename).read_bytes() == archive.read(item)
                 verified += 1
-    assert verified == 26, "Expected 18 modules and eight fixed model/host assets"
+    assert verified == 28, "Expected 19 modules and nine fixed model/host assets"
     report = {
         "ok": True,
         "version": version,

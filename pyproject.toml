@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "embedded-sim-runner"
-version = "0.8.0"
+version = "0.9.0"
 description = "Bounded, evidence-preserving firmware simulation with Renode and Espressif QEMU"
 readme = "README.md"
 requires-python = ">=3.11"

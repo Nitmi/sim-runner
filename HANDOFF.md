@@ -1,5 +1,46 @@
 # Handoff
 
+## 2026-10-30 — local 0.9.0 SPI sensor profile
+
+Branch: `feat/nrf52840-spi-sensor`, based on published 0.8.0 source
+`7f542e0a8b4423b08b7ee0729102d261bb36e2a8`. User chose peripheral/fault expansion.
+Adds an independent fixed legacy SPI0/LM74 profile, signed Q4 Rust fixture,
+frozen-temperature and model-byte frame-slip controls. See
+`docs/nrf52840-spi-sensor.md` for the exact 1.17 Infrastructure revision, protocol,
+limits and commands. No remote writes, tags, releases, HIL/Trace/Toolkit edits,
+plugin activation or workstation/runtime-lock switches are authorized here.
+
+Source qualification: both Python 3.11/3.13 pass 339 tests; Ruff check/format
+pass. Native nominal, two model faults, unsigned/stale/swapped/fraction-truncated
+firmware, unmapped access and wrong BUILD were each captured once with complete
+cleanup. Faults remain failed nominal regressions with observed effects. Package
+and cold-install evidence belongs outside Git at
+`D:/Code/tmp/sim-spi-090-20261030`; consult its final receipt for completion.
+
+Pitfalls:
+
+- Fixed 1.17 SPI chooses legacy/EasyDMA at construction, unlike newer master.
+  It has no PSEL/FREQUENCY/CONFIG or CS routing, and does not call the sensor's
+  `FinishTransmission`. LM74 alternates cached high/low bytes; after a slip the
+  first sample following a temperature change contains the prior cached low
+  byte. The independent literal test oracle must include those transition words.
+- The slip is one fixed monitor `Transmit(0)`, not an electrical fault. Its
+  marker/return alone is insufficient; model snapshots and guest words must
+  establish effect separately from the nominal failure verdict.
+- The initial native matrix helper expected a nonexistent BACKEND_DIAGNOSTIC
+  code for unmapped MMIO; the real, correct code is MODEL_COVERAGE_FAILED. Only
+  this host assertion was corrected; completed native outputs were preserved
+  and no emulator case was replayed to hide the wrapper failure.
+- Fixture source is directly `examples/.../main.rs`, not `src/main.rs`.
+  Broad combined reads may truncate tool output; use bounded source regions.
+  Updating wheel inventories adds one module and one model asset: 28 runtime
+  payload files, 33 wheel members. Never confuse source or old installed imports.
+
+Native startup/runtime inventory costs dominate 82 virtual ms. Record host
+wall time and output bytes separately; the 1 GiB Job cap is not measured RSS or
+a real-time/physical SPI throughput claim. Existing saved profiles remain
+separate, and new schemas require explicit future HIL/Trace integration.
+
 ## 2026-10-29 — local 0.8.0 sensor profile
 
 Branch: `feat/nrf52840-i2c-sensor`; based on published 0.7.0 plus its documentation

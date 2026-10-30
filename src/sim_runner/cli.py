@@ -5,7 +5,17 @@ import json
 import sys
 from pathlib import Path
 
-from . import __version__, esp_wasm, gpio_fault, gpio_timer, qemu, qemu_flash, qemu_s3, sensor
+from . import (
+    __version__,
+    esp_wasm,
+    gpio_fault,
+    gpio_timer,
+    qemu,
+    qemu_flash,
+    qemu_s3,
+    sensor,
+    spi_sensor,
+)
 from .common import FLAGS, SimError, bound, decode, file_record, require, write_json
 from .inspect import inspect_report
 from .plan import load_plan, make_plan, runtime
@@ -43,6 +53,7 @@ def main(argv=None):
             gpio_timer.PROFILE,
             gpio_fault.PROFILE,
             sensor.PROFILE,
+            spi_sensor.PROFILE,
             qemu.PROFILE,
             qemu_flash.PROFILE,
             qemu_s3.PROFILE,
@@ -51,8 +62,8 @@ def main(argv=None):
     )
     plan.add_argument(
         "--fault",
-        choices=tuple(dict.fromkeys((*gpio_fault.FAULTS, *sensor.FAULTS))),
-        help="required for GPIO fault and I2C sensor profiles; none is the nominal control",
+        choices=tuple(dict.fromkeys((*gpio_fault.FAULTS, *sensor.FAULTS, *spi_sensor.FAULTS))),
+        help="required for GPIO fault and sensor profiles; none is the nominal control",
     )
     plan.add_argument("--firmware", type=Path, required=True)
     plan.add_argument("--firmware-sha256", required=True)
@@ -103,8 +114,9 @@ def main(argv=None):
                 "instruction budget is only supported by ESP-EMU WASM",
             )
             require(
-                (args.fault is not None) == (args.profile in (gpio_fault.PROFILE, sensor.PROFILE)),
-                "--fault is required only for the GPIO fault or I2C sensor profile",
+                (args.fault is not None)
+                == (args.profile in (gpio_fault.PROFILE, sensor.PROFILE, spi_sensor.PROFILE)),
+                "--fault is required only for the GPIO fault or sensor profiles",
             )
             common = (
                 args.runtime_lock,
@@ -116,7 +128,8 @@ def main(argv=None):
                 args.heartbeat_prefix,
                 (
                     16
-                    if args.profile in (gpio_timer.PROFILE, gpio_fault.PROFILE, sensor.PROFILE)
+                    if args.profile
+                    in (gpio_timer.PROFILE, gpio_fault.PROFILE, sensor.PROFILE, spi_sensor.PROFILE)
                     else 3
                 )
                 if args.min_heartbeats is None
@@ -163,11 +176,14 @@ def main(argv=None):
                         gpio_timer.PROFILE,
                         gpio_fault.PROFILE,
                         sensor.PROFILE,
+                        spi_sensor.PROFILE,
                     ),
                     "profile/backend differ",
                 )
                 planner = (
-                    sensor.SensorProfile(args.fault).make_plan
+                    spi_sensor.SPIProfile(args.fault).make_plan
+                    if args.profile == spi_sensor.PROFILE
+                    else sensor.SensorProfile(args.fault).make_plan
                     if args.profile == sensor.PROFILE
                     else gpio_fault.FaultProfile(args.fault).make_plan
                     if args.profile == gpio_fault.PROFILE
@@ -177,7 +193,8 @@ def main(argv=None):
                 )
                 default_ms = (
                     82
-                    if args.profile in (gpio_timer.PROFILE, gpio_fault.PROFILE, sensor.PROFILE)
+                    if args.profile
+                    in (gpio_timer.PROFILE, gpio_fault.PROFILE, sensor.PROFILE, spi_sensor.PROFILE)
                     else 250
                 )
                 result = planner(
@@ -204,6 +221,7 @@ def main(argv=None):
                 gpio_timer.PLAN_SCHEMA: gpio_timer.load_plan,
                 gpio_fault.PLAN_SCHEMA: gpio_fault.load_plan,
                 sensor.PLAN_SCHEMA: sensor.load_plan,
+                spi_sensor.PLAN_SCHEMA: spi_sensor.load_plan,
                 esp_wasm.PLAN_SCHEMA: esp_wasm.load_plan,
             }.get(schema, load_plan)
             result = loader(args.plan, args.sha256)
@@ -222,6 +240,7 @@ def main(argv=None):
                 qemu_s3.REPORT_SCHEMA: qemu_s3.inspect_report,
                 gpio_fault.REPORT_SCHEMA: gpio_fault.inspect_report,
                 sensor.REPORT_SCHEMA: sensor.inspect_report,
+                spi_sensor.REPORT_SCHEMA: spi_sensor.inspect_report,
                 esp_wasm.REPORT_SCHEMA: esp_wasm.inspect_report,
             }.get(schema, inspect_report)
             result = inspector(
@@ -238,6 +257,7 @@ def main(argv=None):
                 qemu_s3.PLAN_SCHEMA: qemu_s3.run,
                 gpio_fault.PLAN_SCHEMA: gpio_fault.run,
                 sensor.PLAN_SCHEMA: sensor.run,
+                spi_sensor.PLAN_SCHEMA: spi_sensor.run,
                 esp_wasm.PLAN_SCHEMA: esp_wasm.run,
             }.get(schema, run)
             result = runner(

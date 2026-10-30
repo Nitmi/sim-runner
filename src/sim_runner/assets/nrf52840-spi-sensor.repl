@@ -1,0 +1,28 @@
+// Fixed Renode 1.17 legacy SPI/LM74 scenario; no SVD, CS routing or host bridges.
+nvic: IRQControllers.NVIC @ sysbus 0xE000E000
+    -> cpu@0
+
+cpu: CPU.CortexM @ sysbus
+    cpuType: "cortex-m4"
+    nvic: nvic
+    PerformanceInMips: 100
+
+flash: Memory.MappedMemory @ sysbus 0x0
+    size: 0x100000
+
+ram: Memory.MappedMemory @ sysbus 0x20000000
+    size: 0x40000
+
+uart0: UART.NRF52840_UART @ sysbus 0x40002000
+    easyDMA: false
+    -> nvic@2
+
+spi0: SPI.NRF52840_SPI @ sysbus 0x40003000
+    easyDMA: false
+    -> nvic@3
+
+temperature: Sensors.TI_LM74 @ spi0
+
+timer0: Timers.NRF52840_Timer @ sysbus 0x40008000
+    numberOfEvents: 4
+    -> nvic@8
