@@ -13,6 +13,7 @@ from . import (
     qemu,
     qemu_flash,
     qemu_s3,
+    rtc,
     sensor,
     spi_sensor,
     watchdog,
@@ -56,6 +57,7 @@ def main(argv=None):
             sensor.PROFILE,
             spi_sensor.PROFILE,
             watchdog.PROFILE,
+            rtc.PROFILE,
             qemu.PROFILE,
             qemu_flash.PROFILE,
             qemu_s3.PROFILE,
@@ -66,10 +68,16 @@ def main(argv=None):
         "--fault",
         choices=tuple(
             dict.fromkeys(
-                (*gpio_fault.FAULTS, *sensor.FAULTS, *spi_sensor.FAULTS, *watchdog.FAULTS)
+                (
+                    *gpio_fault.FAULTS,
+                    *sensor.FAULTS,
+                    *spi_sensor.FAULTS,
+                    *watchdog.FAULTS,
+                    *rtc.FAULTS,
+                )
             )
         ),
-        help="required for GPIO fault, sensor and watchdog profiles; none is the nominal control",
+        help="required for GPIO fault, sensor, watchdog and RTC profiles; none is nominal",
     )
     plan.add_argument("--firmware", type=Path, required=True)
     plan.add_argument("--firmware-sha256", required=True)
@@ -123,9 +131,15 @@ def main(argv=None):
                 (args.fault is not None)
                 == (
                     args.profile
-                    in (gpio_fault.PROFILE, sensor.PROFILE, spi_sensor.PROFILE, watchdog.PROFILE)
+                    in (
+                        gpio_fault.PROFILE,
+                        sensor.PROFILE,
+                        spi_sensor.PROFILE,
+                        watchdog.PROFILE,
+                        rtc.PROFILE,
+                    )
                 ),
-                "--fault is required only for the GPIO fault, sensor or watchdog profiles",
+                "--fault is required only for the GPIO fault, sensor, watchdog or RTC profiles",
             )
             common = (
                 args.runtime_lock,
@@ -136,7 +150,9 @@ def main(argv=None):
                 args.build_line,
                 args.heartbeat_prefix,
                 (
-                    16
+                    10
+                    if args.profile == rtc.PROFILE
+                    else 16
                     if args.profile
                     in (
                         gpio_timer.PROFILE,
@@ -144,6 +160,7 @@ def main(argv=None):
                         sensor.PROFILE,
                         spi_sensor.PROFILE,
                         watchdog.PROFILE,
+                        rtc.PROFILE,
                     )
                     else 3
                 )
@@ -193,11 +210,14 @@ def main(argv=None):
                         sensor.PROFILE,
                         spi_sensor.PROFILE,
                         watchdog.PROFILE,
+                        rtc.PROFILE,
                     ),
                     "profile/backend differ",
                 )
                 planner = (
-                    watchdog.WatchdogProfile(args.fault).make_plan
+                    rtc.RTCProfile(args.fault).make_plan
+                    if args.profile == rtc.PROFILE
+                    else watchdog.WatchdogProfile(args.fault).make_plan
                     if args.profile == watchdog.PROFILE
                     else spi_sensor.SPIProfile(args.fault).make_plan
                     if args.profile == spi_sensor.PROFILE
@@ -210,7 +230,9 @@ def main(argv=None):
                     else make_plan
                 )
                 default_ms = (
-                    82
+                    162
+                    if args.profile == rtc.PROFILE
+                    else 82
                     if args.profile
                     in (
                         gpio_timer.PROFILE,
@@ -218,6 +240,7 @@ def main(argv=None):
                         sensor.PROFILE,
                         spi_sensor.PROFILE,
                         watchdog.PROFILE,
+                        rtc.PROFILE,
                     )
                     else 250
                 )
@@ -247,6 +270,7 @@ def main(argv=None):
                 sensor.PLAN_SCHEMA: sensor.load_plan,
                 spi_sensor.PLAN_SCHEMA: spi_sensor.load_plan,
                 watchdog.PLAN_SCHEMA: watchdog.load_plan,
+                rtc.PLAN_SCHEMA: rtc.load_plan,
                 esp_wasm.PLAN_SCHEMA: esp_wasm.load_plan,
             }.get(schema, load_plan)
             result = loader(args.plan, args.sha256)
@@ -267,6 +291,7 @@ def main(argv=None):
                 sensor.REPORT_SCHEMA: sensor.inspect_report,
                 spi_sensor.REPORT_SCHEMA: spi_sensor.inspect_report,
                 watchdog.REPORT_SCHEMA: watchdog.inspect_report,
+                rtc.REPORT_SCHEMA: rtc.inspect_report,
                 esp_wasm.REPORT_SCHEMA: esp_wasm.inspect_report,
             }.get(schema, inspect_report)
             result = inspector(
@@ -285,6 +310,7 @@ def main(argv=None):
                 sensor.PLAN_SCHEMA: sensor.run,
                 spi_sensor.PLAN_SCHEMA: spi_sensor.run,
                 watchdog.PLAN_SCHEMA: watchdog.run,
+                rtc.PLAN_SCHEMA: rtc.run,
                 esp_wasm.PLAN_SCHEMA: esp_wasm.run,
             }.get(schema, run)
             result = runner(

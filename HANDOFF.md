@@ -1,5 +1,36 @@
 # Handoff
 
+## 2026-10-30 — local 0.11.0 RTC0 compare profile
+
+Branch `feat/nrf52840-rtc`, based on published 0.10.0 source
+`a6f960e8ec1e9f20918b7e6c347b6561ed25adf7`. Adds fixed Renode 1.17 RTC0
+PRESCALER=31/CC0 IRQ/event-clear regression and RTC-stop/interrupt-mask controls.
+See `docs/nrf52840-rtc.md` for audited source, protocol and exclusions. No LFCLK,
+overflow/wrap, TICK/PPI, low-power or physical timing qualification. New distinct
+RTC schemas require future HIL/Trace integration; published Toolkit 0.38.0 and
+workstation choices are not changed. This development task has no public writes.
+
+Python 3.11/3.13 each pass 411 tests; Ruff/format/offline lock/diff checks pass.
+Nine actual native cases (normal, two faults, five bad firmware variants and
+wrong BUILD) finish once with complete cleanup. Both fault effects are observed
+and remain failed nominal regressions. Build/cold-install/independent offline
+qualification receipts belong in `D:/Code/tmp/sim-rtc-0110-20261030`; consult the
+final receipt before treating those later stages as complete.
+
+Pitfalls:
+
+- The initial test wrapper embedded a Windows JUnit path in a Python string;
+  backslash escapes corrupted it and JUnit writeout failed after test execution.
+  Pass the path as a separate argv item. Raw failure is retained; both final
+  full test runs succeeded. No emulator attempt was repeated for that error.
+- Broad plan/runtime searches truncate output. Search specific sections or
+  known roots. A read guessed `ci_package_smoke.py`/`qualify.py`; neither exists.
+  The actual installed smoke is `scripts/package_smoke.py`. Use rg --files first.
+- RTC uses its fixed model divider, not CLOCK/LFCLK startup or measured time.
+  Do not access TRIGOVRFLW/overflow tags or import newer master semantics.
+- Runtime package inventory adds rtc.py and its model: 32 package files,
+  37 wheel members. Keep source imports and old installed versions distinct.
+
 ## 2026-10-30 — local 0.10.0 watchdog profile
 
 Branch `feat/nrf52840-watchdog`, based on published 0.9.0

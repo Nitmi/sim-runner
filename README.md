@@ -26,13 +26,22 @@ raw words, signed Q4 values and normal regression verdicts remain separate.
 There is no SPI chip-select, clock-mode, electrical or accuracy qualification.
 The new schemas require explicit HIL/Trace integration before Toolkit adoption.
 
-Local candidate **0.10.0** adds a fixed
+Version **0.10.0** adds a fixed
 [dual-channel watchdog regression](docs/nrf52840-watchdog.md). It checks both
 reload requests, model running state, TIMER0 IRQ samples and watchdog-triggered
 guest reboots. Fixed missed-feed and disabled-watchdog controls retain failed
 nominal verdicts. CONFIG sleep/halt, physical reset and protection guarantees
-remain outside coverage. Its distinct schemas require future HIL/Trace routing;
-Toolkit 0.37.0 and the workstation configuration remain unchanged.
+remain outside coverage. Published HIL/Trace 0.15.0 support this schema;
+Toolkit 0.38.0 selects this released combination.
+
+Local candidate **0.11.0** adds a separate
+[RTC0 compare-interrupt regression](docs/nrf52840-rtc.md). Ten periodic IRQs,
+prescaler/readback, compare rearming, event clearing and four paused snapshots
+are checked in 162 virtual ms. Fixed RTC-stop and interrupt-mask controls keep
+the nominal regression failed even when their model effects are observed.
+LFCLK startup/drift, overflow/wrap and low-power/wakeup remain outside coverage.
+The new RTC schemas need subsequent HIL/Trace integration; this local build
+does not change the published Toolkit or workstation selection.
 
 Release **0.7.0** adds an experimental
 [ESP-EMU 0.50.0 WASM / ESP32-C3 Flash profile](docs/esp-emulator-wasm.md).

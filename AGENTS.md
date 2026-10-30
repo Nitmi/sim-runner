@@ -11,6 +11,9 @@ the frame-slip control is a model Transmit call, not a physical bus glitch.
 The fixed watchdog profile covers two reload channels, RUNSTATUS and model reset
 with TIMER0 feeding or fixed timer-stop/LimitTimer-disable faults. It does not
 cover CONFIG, sleep/halt, timeout IRQ, physical reset or protection guarantees.
+The fixed RTC0 profile covers PRESCALER=31, CC0 compare interrupts and event
+clearing, with TASKS_STOP/INTENCLR faults. It excludes LFCLK selection/startup,
+TICK/overflow/TRIGOVRFLW/wrap, PPI and sleep/power/wakeup qualification.
 These sensor controls do not model electrical
 I2C, NACK/disconnect, conversion delay, calibration or physical accuracy. Use
 Renode 1.17 source semantics, not a newer model's registers. Espressif QEMU covers
