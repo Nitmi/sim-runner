@@ -1,5 +1,27 @@
 # Handoff
 
+## 2026-11-03 — EGU joint qualification: private Renode history
+
+The HIL/Trace0.17 dual-Python joint acceptance exposed concurrent Renode1.17
+AntShell writes to the real Windows Roaming/renode/history. Child APPDATA and
+RENODE_CI_MODE did not isolate this file: ShellProvider reads general/history-path
+from the selected INI; Windows known-folder resolution bypasses the environment.
+Keep the failed RTC report (BACKEND_FAILED, complete Job cleanup, next case not
+run) in D:/Code/tmp/hil-trace-egu-0170-20261103/egu-311. Do not relabel it.
+
+run.py now binds that documented source key to each unique output directory's
+host/renode-history file via a fixed relative INI value. All Renode profiles share this launch path. No backend error is
+suppressed and no retry/fallback is added. Tests parse the actual INI with spaces
+and Unicode paths; fresh installed parallel qualification is recorded with the
+HIL/Trace receipts. The previous0.12 candidate and sealed native evidence remain
+immutable; create a new source-bound candidate for this unpublished version.
+The first dual-Python check correctly caught25 legacy inspectors requiring an
+empty INI. Saved inspection now accepts only the historical empty bytes or the
+exact new fixed bytes; a rehashed arbitrary path is rejected. These failed
+development checks remain preserved; they did not launch Renode.
+Source: renode-infrastructure066a7f13,
+src/Emulator/Extensions/UserInterface/ShellProvider.cs (HistorySavePath).
+
 ## 2026-11-03 — local 0.12.0 EGU0 task/event/IRQ profile
 
 Branch `feat/nrf52840-egu`, based on published 0.11.0 source

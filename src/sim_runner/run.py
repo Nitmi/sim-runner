@@ -6,6 +6,7 @@ from pathlib import Path
 from .backend import check_logs
 from .common import (
     FLAGS,
+    RENODE_CONFIG,
     AssertionFailure,
     SimError,
     bound,
@@ -56,7 +57,10 @@ def run(plan_path: Path, expected: str, directory: Path, *, profile=None) -> dic
         encoding="utf-8",
         newline="\n",
     )
-    (directory / "renode.config").write_text("", encoding="ascii")
+    # Renode resolves its default history through Windows' known-folder API,
+    # which ignores the child APPDATA override. CI mode disables config writes,
+    # but not AntShell history writes. Bind that history to this run explicitly.
+    (directory / "renode.config").write_bytes(RENODE_CONFIG)
     argv = [
         str(Path(info["root"]) / info["executable"]),
         "--disable-gui",

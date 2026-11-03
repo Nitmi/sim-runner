@@ -2,7 +2,7 @@
 
 import pytest
 
-from sim_runner.common import sha, write_json
+from sim_runner.common import file_record, sha, write_json
 from sim_runner.inspect import inspect_report
 from sim_runner.plan import make_plan
 from sim_runner.run import run
@@ -30,6 +30,12 @@ def test_exit_zero_or_valid_uart_cannot_hide_other_failures(
     def execute_double(argv, directory, *args):
         assert "--port" in argv and "-1" in argv and "--console" not in argv
         assert argv[-2:] == ["--execute", "include @run.resc"]
+        # Read the actual INI as Renode does, preserving spaces and Unicode.
+        import configparser
+
+        config = configparser.ConfigParser()
+        config.read(directory / "renode.config", encoding="utf-8")
+        assert config["general"]["history-path"] == "host/renode-history"
         stdout = b"SIM_RUNNER_COMPLETED_V1\n"
         if fault == "warning":
             stdout += b"[WARNING] unsupported register\n"
@@ -58,7 +64,7 @@ def test_exit_zero_or_valid_uart_cannot_hide_other_failures(
         }
 
     monkeypatch.setattr("sim_runner.run.execute", execute_double)
-    directory = tmp_path / "run"
+    directory = tmp_path / "run with spaces 验收"
     report = run(plan_path, sha(plan_path.read_bytes()), directory)
     assert report["ok"] is (expected is None)
     if expected:
@@ -71,6 +77,22 @@ def test_exit_zero_or_valid_uart_cannot_hide_other_failures(
     inspection = inspect_report(saved, sha(saved.read_bytes()))
     assert inspection["ok"] and inspection["executables_started"] is False
     assert inspection["report_status"] == report["status"]
+    if expected is None:
+        config_path = directory / "renode.config"
+        original = config_path.read_bytes()
+        # Old empty configuration remains portable saved evidence; arbitrary
+        # host paths must still fail even after all enclosing hashes are rebound.
+        for name, raw in (("legacy", b""), ("altered", b"[general]\nhistory-path = ../shared\n")):
+            config_path.write_bytes(raw)
+            report["artifacts"]["renode.config"] = file_record(config_path)
+            variant = directory / (name + "-report.json")
+            write_json(variant, report)
+            if name == "legacy":
+                assert inspect_report(variant, sha(variant.read_bytes()))["ok"]
+            else:
+                with pytest.raises(Exception, match="unexpected Renode configuration"):
+                    inspect_report(variant, sha(variant.read_bytes()))
+        config_path.write_bytes(original)
     (directory / "uart.bin").write_bytes(b"tampered\n")
     with pytest.raises(Exception, match="SHA-256 mismatch"):
         inspect_report(saved, sha(saved.read_bytes()))

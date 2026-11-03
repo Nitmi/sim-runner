@@ -6,6 +6,8 @@ import os
 import re
 from pathlib import Path
 
+RENODE_CONFIG = b"[general]\nhistory-path = host/renode-history\n"
+
 FLAGS = {
     "execution_kind": "simulation",
     "hardware_access": False,
