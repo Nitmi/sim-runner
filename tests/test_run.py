@@ -35,7 +35,10 @@ def test_exit_zero_or_valid_uart_cannot_hide_other_failures(
 
         config = configparser.ConfigParser()
         config.read(directory / "renode.config", encoding="utf-8")
-        assert config["general"]["history-path"] == "host/renode-history"
+        assert (
+            config["general"]["history-path"]
+            == (directory.absolute() / "host" / "renode-history").as_posix()
+        )
         stdout = b"SIM_RUNNER_COMPLETED_V1\n"
         if fault == "warning":
             stdout += b"[WARNING] unsupported register\n"

@@ -10,7 +10,7 @@ Keep the failed RTC report (BACKEND_FAILED, complete Job cleanup, next case not
 run) in D:/Code/tmp/hil-trace-egu-0170-20261103/egu-311. Do not relabel it.
 
 run.py now binds that documented source key to each unique output directory's
-host/renode-history file via a fixed relative INI value. All Renode profiles share this launch path. No backend error is
+host/renode-history file via an absolute INI value. All Renode profiles share this launch path. No backend error is
 suppressed and no retry/fallback is added. Tests parse the actual INI with spaces
 and Unicode paths; fresh installed parallel qualification is recorded with the
 HIL/Trace receipts. The previous0.12 candidate and sealed native evidence remain
@@ -19,6 +19,13 @@ The first dual-Python check correctly caught25 legacy inspectors requiring an
 empty INI. Saved inspection now accepts only the historical empty bytes or the
 exact new fixed bytes; a rehashed arbitrary path is rejected. These failed
 development checks remain preserved; they did not launch Renode.
+The first installed parallel control showed Renode changes cwd to its install
+directory: a relative history path wrote one extra host/renode-history file
+there, triggering native INPUT_CHANGED and fail-stop. Preserve both failed
+reports and move only that proven generated extra file into acceptance evidence
+to restore the pinned inventory. Use absolute per-run paths; saved inspection
+derives the expected bytes from the recorded original path using pure path
+objects, never by reopening it. Requalify new candidates, not failed output dirs.
 Source: renode-infrastructure066a7f13,
 src/Emulator/Extensions/UserInterface/ShellProvider.cs (HistorySavePath).
 

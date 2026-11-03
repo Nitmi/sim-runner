@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from .backend import check_logs
-from .common import FLAGS, RENODE_CONFIG, bound, decode, payload, require, sha
+from .common import FLAGS, bound, decode, payload, renode_config, require, sha
 from .plan import evaluate
 
 
@@ -51,7 +51,17 @@ def inspect_report(path: Path, expected: str, *, profile=None) -> dict:
         data = bound(path.parent / name, record["sha256"], 16 * 1024 * 1024)
         require(len(data) == record["bytes"], "artifact size mismatch")
         loaded[name] = data
-    require(loaded["renode.config"] in (b"", RENODE_CONFIG), "unexpected Renode configuration")
+    # Bind new configuration to the recorded original run location. Pure paths
+    # keep copied evidence portable without opening that location, even on POSIX.
+    config_path = artifacts["renode.config"]["path"]
+    recorded = PureWindowsPath(config_path)
+    if not recorded.is_absolute():
+        recorded = PurePosixPath(config_path)
+    require(recorded.is_absolute(), "invalid recorded configuration path")
+    require(
+        loaded["renode.config"] in (b"", renode_config(recorded.parent)),
+        "unexpected Renode configuration",
+    )
     require(sha(loaded["plan.json"]) == report["plan_sha256"], "plan binding mismatch")
     plan = decode(loaded["plan.json"])
     require(

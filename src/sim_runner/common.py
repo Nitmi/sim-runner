@@ -6,7 +6,13 @@ import os
 import re
 from pathlib import Path
 
-RENODE_CONFIG = b"[general]\nhistory-path = host/renode-history\n"
+
+def renode_config(directory) -> bytes:
+    """Absolute host state: Renode changes cwd to its installation at startup."""
+    return (
+        f"[general]\nhistory-path = {(directory / 'host' / 'renode-history').as_posix()}\n".encode()
+    )
+
 
 FLAGS = {
     "execution_kind": "simulation",
