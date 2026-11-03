@@ -7,6 +7,7 @@ from pathlib import Path
 
 from . import (
     __version__,
+    egu,
     esp_wasm,
     gpio_fault,
     gpio_timer,
@@ -58,6 +59,7 @@ def main(argv=None):
             spi_sensor.PROFILE,
             watchdog.PROFILE,
             rtc.PROFILE,
+            egu.PROFILE,
             qemu.PROFILE,
             qemu_flash.PROFILE,
             qemu_s3.PROFILE,
@@ -74,10 +76,11 @@ def main(argv=None):
                     *spi_sensor.FAULTS,
                     *watchdog.FAULTS,
                     *rtc.FAULTS,
+                    *egu.FAULTS,
                 )
             )
         ),
-        help="required for GPIO fault, sensor, watchdog and RTC profiles; none is nominal",
+        help="required for GPIO fault, sensor, watchdog, RTC and EGU profiles; none is nominal",
     )
     plan.add_argument("--firmware", type=Path, required=True)
     plan.add_argument("--firmware-sha256", required=True)
@@ -137,9 +140,10 @@ def main(argv=None):
                         spi_sensor.PROFILE,
                         watchdog.PROFILE,
                         rtc.PROFILE,
+                        egu.PROFILE,
                     )
                 ),
-                "--fault is required only for the GPIO fault, sensor, watchdog or RTC profiles",
+                "--fault is required only for GPIO fault, sensor, watchdog, RTC or EGU profiles",
             )
             common = (
                 args.runtime_lock,
@@ -150,7 +154,9 @@ def main(argv=None):
                 args.build_line,
                 args.heartbeat_prefix,
                 (
-                    10
+                    9
+                    if args.profile == egu.PROFILE
+                    else 10
                     if args.profile == rtc.PROFILE
                     else 16
                     if args.profile
@@ -161,6 +167,7 @@ def main(argv=None):
                         spi_sensor.PROFILE,
                         watchdog.PROFILE,
                         rtc.PROFILE,
+                        egu.PROFILE,
                     )
                     else 3
                 )
@@ -211,11 +218,14 @@ def main(argv=None):
                         spi_sensor.PROFILE,
                         watchdog.PROFILE,
                         rtc.PROFILE,
+                        egu.PROFILE,
                     ),
                     "profile/backend differ",
                 )
                 planner = (
-                    rtc.RTCProfile(args.fault).make_plan
+                    egu.EGUProfile(args.fault).make_plan
+                    if args.profile == egu.PROFILE
+                    else rtc.RTCProfile(args.fault).make_plan
                     if args.profile == rtc.PROFILE
                     else watchdog.WatchdogProfile(args.fault).make_plan
                     if args.profile == watchdog.PROFILE
@@ -230,7 +240,9 @@ def main(argv=None):
                     else make_plan
                 )
                 default_ms = (
-                    162
+                    40
+                    if args.profile == egu.PROFILE
+                    else 162
                     if args.profile == rtc.PROFILE
                     else 82
                     if args.profile
@@ -241,6 +253,7 @@ def main(argv=None):
                         spi_sensor.PROFILE,
                         watchdog.PROFILE,
                         rtc.PROFILE,
+                        egu.PROFILE,
                     )
                     else 250
                 )
@@ -271,6 +284,7 @@ def main(argv=None):
                 spi_sensor.PLAN_SCHEMA: spi_sensor.load_plan,
                 watchdog.PLAN_SCHEMA: watchdog.load_plan,
                 rtc.PLAN_SCHEMA: rtc.load_plan,
+                egu.PLAN_SCHEMA: egu.load_plan,
                 esp_wasm.PLAN_SCHEMA: esp_wasm.load_plan,
             }.get(schema, load_plan)
             result = loader(args.plan, args.sha256)
@@ -292,6 +306,7 @@ def main(argv=None):
                 spi_sensor.REPORT_SCHEMA: spi_sensor.inspect_report,
                 watchdog.REPORT_SCHEMA: watchdog.inspect_report,
                 rtc.REPORT_SCHEMA: rtc.inspect_report,
+                egu.REPORT_SCHEMA: egu.inspect_report,
                 esp_wasm.REPORT_SCHEMA: esp_wasm.inspect_report,
             }.get(schema, inspect_report)
             result = inspector(
@@ -311,6 +326,7 @@ def main(argv=None):
                 spi_sensor.PLAN_SCHEMA: spi_sensor.run,
                 watchdog.PLAN_SCHEMA: watchdog.run,
                 rtc.PLAN_SCHEMA: rtc.run,
+                egu.PLAN_SCHEMA: egu.run,
                 esp_wasm.PLAN_SCHEMA: esp_wasm.run,
             }.get(schema, run)
             result = runner(

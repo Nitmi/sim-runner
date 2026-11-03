@@ -34,14 +34,21 @@ nominal verdicts. CONFIG sleep/halt, physical reset and protection guarantees
 remain outside coverage. Published HIL/Trace 0.15.0 support this schema;
 Toolkit 0.38.0 selects this released combination.
 
-Local candidate **0.11.0** adds a separate
+Version **0.11.0** adds a separate
 [RTC0 compare-interrupt regression](docs/nrf52840-rtc.md). Ten periodic IRQs,
 prescaler/readback, compare rearming, event clearing and four paused snapshots
 are checked in 162 virtual ms. Fixed RTC-stop and interrupt-mask controls keep
 the nominal regression failed even when their model effects are observed.
 LFCLK startup/drift, overflow/wrap and low-power/wakeup remain outside coverage.
-The new RTC schemas need subsequent HIL/Trace integration; this local build
-does not change the published Toolkit or workstation selection.
+Published HIL/Trace 0.16.0 and Toolkit 0.39.0 support this RTC schema.
+
+Local candidate **0.12.0** adds a fixed
+[EGU task/event/IRQ regression](docs/nrf52840-egu.md). Nine software events on
+channels 0/3/15 are checked against guest ISR samples and 18 paused model
+snapshots. Channel masking and single-event misrouting remain failed nominal
+regressions even when their effects are observed. PPI, guest task generation,
+external signals and physical timing are outside coverage. New EGU schemas
+require subsequent HIL/Trace integration; workstation choices stay unchanged.
 
 Release **0.7.0** adds an experimental
 [ESP-EMU 0.50.0 WASM / ESP32-C3 Flash profile](docs/esp-emulator-wasm.md).

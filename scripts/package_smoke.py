@@ -152,6 +152,7 @@ def main() -> None:
         *(("nrf52840-spi-sensor-v1", f) for f in ("none", "temperature-stuck", "frame-slip")),
         *(("nrf52840-watchdog-v1", f) for f in ("none", "feed-timer-stop", "watchdog-stop")),
         *(("nrf52840-rtc-v1", f) for f in ("none", "rtc-stop", "rtc-irq-mask")),
+        *(("nrf52840-egu-v1", f) for f in ("none", "egu-irq-mask", "egu-channel-misroute")),
     ):
         label = profile + "-" + fault
         sensor_plan = root / (label + ".plan.json")
@@ -198,7 +199,7 @@ def main() -> None:
             if item.filename.startswith("sim_runner/") and not item.is_dir():
                 assert (package.parent / item.filename).read_bytes() == archive.read(item)
                 verified += 1
-    assert verified == 32, "Expected 21 modules and eleven fixed model/host assets"
+    assert verified == 34, "Expected 22 modules and twelve fixed model/host assets"
     report = {
         "ok": True,
         "version": version,

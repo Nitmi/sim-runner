@@ -14,8 +14,12 @@ cover CONFIG, sleep/halt, timeout IRQ, physical reset or protection guarantees.
 The fixed RTC0 profile covers PRESCALER=31, CC0 compare interrupts and event
 clearing, with TASKS_STOP/INTENCLR faults. It excludes LFCLK selection/startup,
 TICK/overflow/TRIGOVRFLW/wrap, PPI and sleep/power/wakeup qualification.
-These sensor controls do not model electrical
-I2C, NACK/disconnect, conversion delay, calibration or physical accuracy. Use
+The fixed EGU0 profile uses monitor TASKS_TRIGGER on 0/3/15 and observes event
+latches/INTEN before and after guest IRQ service; faults mask channel 3 or route
+one task to disabled sentinel channel 1. It excludes PPI, guest task-producer,
+external routing, all-channel completeness, IRQ latency and physical timing.
+These sensor controls do not model electrical I2C, NACK/disconnect, conversion
+delay, calibration or physical accuracy. Use
 Renode 1.17 source semantics, not a newer model's registers. Espressif QEMU covers
 ESP32-C3 RAM/UART or the bounded ESP-IDF C3/S3 Flash/UART profiles, or the
 experimental fixed ESP32-C3 ESP-EMU 0.50.0 WASM/Node profile. The latter has no

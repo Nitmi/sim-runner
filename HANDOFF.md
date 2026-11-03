@@ -1,5 +1,44 @@
 # Handoff
 
+## 2026-11-03 — local 0.12.0 EGU0 task/event/IRQ profile
+
+Branch `feat/nrf52840-egu`, based on published 0.11.0 source
+`7563db376699b6393788a3d1ad4d6e0cbcb1482e`. Adds a fixed Renode 1.17
+EGU0 monitor-task/guest-ISR regression: channels 0/3/15, disabled channel-1
+sentinel, nine stimuli and eighteen paused pre/post snapshots in 40 virtual ms.
+The two faults mask channel 3 or misroute one task to channel 1. Observed fault
+effects always retain failed nominal verdicts. See `docs/nrf52840-egu.md` for
+the exact source, protocol, schedule, negative fixtures and excluded coverage.
+No PPI, guest producer, physical timing or all-channel qualification is implied.
+New EGU schemas need separate HIL/Trace integration. No public writes or changes
+to Toolkit, active plugin, workstation choices or persistent PATH are in scope.
+
+Python 3.11/3.13 each pass 447 tests, with no skips; Ruff/format/offline lock/diff
+checks pass. Nine native source cases finish with expected verdicts and complete
+cleanup: nominal, two observed faults, five bad fixtures and wrong BUILD.
+Build/cold-install/movable-evidence/performance receipts are outside Git in
+`D:/Code/tmp/sim-egu-0120-20261103`; use its final completed/sealed receipts for
+those stages rather than treating this source note as a later-stage result.
+
+Pitfalls:
+
+- The source-audit scaffold initially read UTF-8 Chinese reports with Windows'
+  default GBK decoder. Use explicit UTF-8. A controller launched with `-I`
+  could not import its neighboring `work.py`; invoke that local controller with
+  `-B`, while keeping actual tests/CLI/cold-installed commands isolated by `-I`.
+  These wrapper failures occurred before emulator execution; evidence retained.
+- The first unit suite passed all new EGU tests but failed the old release
+  member-count assertion. Inventory is now 34 package payload files (22 modules,
+  12 assets), 39 wheel members. The first lint caught import order and an overlong
+  CLI message; both are fixed. Final full suites and checks pass.
+- Marker inventory includes unterminated extra markers; do not silently ignore
+  a partial appended snapshot/fault marker. Unit controls cover this case.
+- GitHub content API base64 may wrap lines: decode the full content once before
+  archiving source. Renode 1.17 has EGU but not audited SAADC/PWM models; PPI is
+  deliberately absent, not replaced by a stub or newer-master implementation.
+- One read tried a still-running command's stdout before capture completed;
+  no file existed yet. Read the finalized receipt instead. No emulator retry.
+
 ## 2026-10-30 — local 0.11.0 RTC0 compare profile
 
 Branch `feat/nrf52840-rtc`, based on published 0.10.0 source
