@@ -42,13 +42,21 @@ the nominal regression failed even when their model effects are observed.
 LFCLK startup/drift, overflow/wrap and low-power/wakeup remain outside coverage.
 Published HIL/Trace 0.16.0 and Toolkit 0.39.0 support this RTC schema.
 
-Local candidate **0.12.0** adds a fixed
+Version **0.12.0** adds a fixed
 [EGU task/event/IRQ regression](docs/nrf52840-egu.md). Nine software events on
 channels 0/3/15 are checked against guest ISR samples and 18 paused model
 snapshots. Channel masking and single-event misrouting remain failed nominal
 regressions even when their effects are observed. PPI, guest task generation,
 external signals and physical timing are outside coverage. New EGU schemas
-require subsequent HIL/Trace integration; workstation choices stay unchanged.
+are supported by published HIL/Trace 0.17.0 and Toolkit 0.40.0.
+
+Local candidate **0.13.0** adds a fixed
+[GPIOTE input-event/IRQ regression](docs/nrf52840-gpiote.md). Rising, falling and
+toggle inputs on three channels are checked against guest ISR samples, GPIO
+input levels and 18 paused register snapshots. Masked IRQ and wrong-polarity
+controls retain failed nominal verdicts even when their model effects are
+observed. Output tasks, PORT/SENSE, PPI, electrical behavior and physical timing
+are outside coverage. These new schemas require separate HIL/Trace integration.
 
 Release **0.7.0** adds an experimental
 [ESP-EMU 0.50.0 WASM / ESP32-C3 Flash profile](docs/esp-emulator-wasm.md).

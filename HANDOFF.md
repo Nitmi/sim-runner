@@ -1,5 +1,36 @@
 # Handoff
 
+## 2026-11-03 — local 0.13.0 GPIOTE development
+
+Branch feat/nrf52840-gpiote starts at published 0.12 source
+d42d0f2f9a6c3cabe772b0cc5bc5ef411e7f0a5e. Adds only the fixed
+nrf52840-gpiote-v1 input profile: channels 0/1/2 on P0.11 rising, P0.12 falling,
+P1.3 toggle, seven nominal IRQs and 18 PRE/POST model snapshots in 40 virtual ms.
+Faults mask channel 2 or change its polarity to falling. Keep observed fault
+effects separate from the failed nominal regression. Do not route the new
+schemas through old EGU/RTC evidence consumers. No HIL/Trace/Toolkit changes or
+publication are included in this task.
+
+Audit Renode 1.17 infrastructure 066a7f13: CONFIG.OUTINIT reads current channel
+state, not its initial write value; EventPending is assigned on matching pin
+changes rather than unconditionally latched. GPIO initial pin 12 high is set
+before guest initialization. Restrict claims to the audited input/IRQ subset;
+TASKS_OUT/SET/CLR, PORT/SENSE/LATCH/DETECTMODE, PPI and physical timing are excluded.
+
+Local evidence root D:/Code/tmp/sim-gpiote-0130-20261103. The first full Python
+3.11 test pass reached 506 passed / 3 failed because the copied saved-report test
+lacked import json. That test harness import is fixed; original failure logs
+remain, with subsequent checks assigned fresh labels. No native run had been
+made at that checkpoint. Final Python3.11/3.13 each passed509 tests after the
+six Ruff findings were corrected (long lines, explicit strict zip and explicit
+loop snapshot parameters). Source native normal, two faults, five bad firmware
+variants and wrong BUILD all produced the expected verdicts, nine attempts,
+no retries and complete Job/thread cleanup. Wrong BUILD retains18 model
+snapshots but no guest samples and unknown fault effect. Newline normalization
+found zero CRLF files before any fixture build. Next: commit, reproducible
+packages, two isolated installations/native controls, moved-report audit and
+cost measurement. Never relabel captures made from old source bytes.
+
 ## 2026-11-03 — EGU joint qualification: private Renode history
 
 The HIL/Trace0.17 dual-Python joint acceptance exposed concurrent Renode1.17

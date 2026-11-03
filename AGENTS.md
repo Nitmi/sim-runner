@@ -18,6 +18,10 @@ The fixed EGU0 profile uses monitor TASKS_TRIGGER on 0/3/15 and observes event
 latches/INTEN before and after guest IRQ service; faults mask channel 3 or route
 one task to disabled sentinel channel 1. It excludes PPI, guest task-producer,
 external routing, all-channel completeness, IRQ latency and physical timing.
+The fixed GPIOTE input profile covers channels 0/1/2, P0.11 rising, P0.12 falling,
+and P1.3 toggle edges with paused CONFIG/EVENTS_IN/INTEN/GPIO snapshots. Its two
+faults mask channel 2 or change its polarity to falling. No TASKS_OUT/SET/CLR,
+PORT/SENSE/LATCH/DETECTMODE, PPI, electrical behavior or physical timing is qualified.
 These sensor controls do not model electrical I2C, NACK/disconnect, conversion
 delay, calibration or physical accuracy. Use
 Renode 1.17 source semantics, not a newer model's registers. Espressif QEMU covers
