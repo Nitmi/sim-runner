@@ -36,6 +36,12 @@ snapshot includes EVENTS_TRIGGERED on channels 0/1/3/15 and INTEN, plus its raw
 stdout offset, length and SHA-256. Requested virtual boundaries are distinct
 from host wall time and the order of raw UART bytes.
 
+Renode's asynchronous logger shares stdout with the monitor's Console.WriteLine.
+Up to four exact timestamped INFO `nrf52840-egu: Machine paused/resumed.` lines
+may appear before each value. These lines stay inside the hashed raw span.
+Other interleaved lines, excess lifecycle lines and malformed/missing values
+fail parsing; global warning/error rejection is unchanged.
+
 The nominal oracle requires exactly nine sequential ISR samples, correct
 channel order, event before=1/after=0, mask=0x8009 and exception vector 36.
 Independent model snapshots require the corresponding event pending before

@@ -13,7 +13,7 @@ No PPI, guest producer, physical timing or all-channel qualification is implied.
 New EGU schemas need separate HIL/Trace integration. No public writes or changes
 to Toolkit, active plugin, workstation choices or persistent PATH are in scope.
 
-Python 3.11/3.13 each pass 447 tests, with no skips; Ruff/format/offline lock/diff
+Python 3.11/3.13 each pass 456 tests, with no skips; Ruff/format/offline lock/diff
 checks pass. Nine native source cases finish with expected verdicts and complete
 cleanup: nominal, two observed faults, five bad fixtures and wrong BUILD.
 Build/cold-install/movable-evidence/performance receipts are outside Git in
@@ -45,6 +45,13 @@ Pitfalls:
   both cold-installed native controls separately. Earlier nine source attempts
   used behavior-identical pre-normalization fixture bytes; retain their actual
   source/compiler/variant hashes rather than relabeling them as final builds.
+- Python 3.13's first cold native control exposed asynchronous lifecycle INFO
+  interleaving between Console.WriteLine snapshot fields. Its failed report is
+  immutable history, not silently reclassified. The parser now retains and
+  hashes bounded exact paused/resumed INFO lines between fields; warnings,
+  unrelated INFO, excess lines and missing values still fail. Tests cover every
+  field position and rejection cases. Build a new commit/candidate and perform
+  fresh cold qualification; do not overwrite the failed environment/attempt.
 
 ## 2026-10-30 — local 0.11.0 RTC0 compare profile
 

@@ -256,7 +256,15 @@ def parse_observations(stdout, fault):
         if not condition:
             raise AssertionFailure(message, {})
 
-    pattern = rb"(?m)^SIM_EGU_OBS_([0-8])_(PRE|POST)\r?\n" + rb"([0-9]{1,10})\r?\n" * 5
+    # Monitor Console.WriteLine and Renode's asynchronous INFO logger share stdout.
+    # Retain the raw span, allowing only bounded, exact lifecycle lines between
+    # fields. Never filter general INFO, warnings/errors, missing or extra values.
+    lifecycle = (
+        rb"\[[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{4}\] \[INFO\] "
+        rb"nrf52840-egu: Machine (?:paused|resumed)\.\r?\n"
+    )
+    field = rb"(?:" + lifecycle + rb"){0,4}([0-9]{1,10})\r?\n"
+    pattern = rb"(?m)^SIM_EGU_OBS_([0-8])_(PRE|POST)\r?\n" + field * 5
     matches = list(re.finditer(pattern, stdout))
     markers = list(re.finditer(rb"(?m)^SIM_EGU_OBS_([^\r\n]*)(?:\r?\n|$)", stdout))
     check(

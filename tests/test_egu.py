@@ -172,6 +172,37 @@ def test_partial_extra_marker_cannot_hide_after_complete_inventory(tail):
         egu.EGUProfile("none").evaluate(uart, ASSERTIONS, stdout + tail)
 
 
+@pytest.mark.parametrize("position", range(5))
+def test_async_lifecycle_info_preserves_raw_snapshot_span(position):
+    uart, stdout = transcript()
+    block = b"SIM_EGU_OBS_0_POST\r\n0\r\n0\r\n0\r\n0\r\n32777\r\n"
+    lines = block.splitlines(keepends=True)
+    lines.insert(position + 1, b"[11:11:35.4640] [INFO] nrf52840-egu: Machine paused.\r\n")
+    changed = b"".join(lines)
+    stdout = stdout.replace(block, changed)
+    result = egu.EGUProfile("none").evaluate(uart, ASSERTIONS, stdout)
+    observation = result["model_observations"][1]
+    assert result["nominal_regression_passed"] is True
+    assert observation["stdout_sha256"] == sha(changed)
+    assert observation["stdout_bytes"] == len(changed)
+
+
+@pytest.mark.parametrize(
+    "interleaved",
+    [
+        b"[11:11:35.4640] [WARNING] nrf52840-egu: Machine paused.\r\n",
+        b"[11:11:35.4640] [INFO] nrf52840-egu: different message.\r\n",
+        b"[11:11:35.4640] [INFO] another-machine: Machine paused.\r\n",
+        b"[11:11:35.4640] [INFO] nrf52840-egu: Machine paused.\r\n" * 5,
+    ],
+)
+def test_unknown_or_excessive_interleaved_lines_cannot_pass(interleaved):
+    uart, stdout = transcript()
+    stdout = stdout.replace(b"OBS_0_POST\r\n", b"OBS_0_POST\r\n" + interleaved)
+    with pytest.raises(AssertionFailure):
+        egu.EGUProfile("none").evaluate(uart, ASSERTIONS, stdout)
+
+
 @pytest.mark.parametrize("fault", egu.FAULTS)
 def test_saved_passed_and_failed_evidence_recomputed(inputs, tmp_path, monkeypatch, fault):
     inputs.update(ready="READY", build="BUILD", heartbeat="SAMPLE")
