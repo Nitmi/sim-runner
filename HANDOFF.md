@@ -38,6 +38,13 @@ Pitfalls:
   deliberately absent, not replaced by a stub or newer-master implementation.
 - One read tried a still-running command's stdout before capture completed;
   no file existed yet. Read the finalized receipt instead. No emulator retry.
+- Source-bound build correctly refused CRLF working bytes that Git normalized
+  to LF. Preserve the rejected build and original files, mechanically normalize
+  tracked text to `.gitattributes` LF, and verify each result equals the committed
+  blob. Rebuild the nominal fixture from those final bytes and qualify it plus
+  both cold-installed native controls separately. Earlier nine source attempts
+  used behavior-identical pre-normalization fixture bytes; retain their actual
+  source/compiler/variant hashes rather than relabeling them as final builds.
 
 ## 2026-10-30 — local 0.11.0 RTC0 compare profile
 
