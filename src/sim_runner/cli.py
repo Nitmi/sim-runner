@@ -12,6 +12,7 @@ from . import (
     gpio_fault,
     gpio_timer,
     gpiote,
+    ppi,
     qemu,
     qemu_flash,
     qemu_s3,
@@ -62,6 +63,7 @@ def main(argv=None):
             rtc.PROFILE,
             egu.PROFILE,
             gpiote.PROFILE,
+            ppi.PROFILE,
             qemu.PROFILE,
             qemu_flash.PROFILE,
             qemu_s3.PROFILE,
@@ -80,10 +82,11 @@ def main(argv=None):
                     *rtc.FAULTS,
                     *egu.FAULTS,
                     *gpiote.FAULTS,
+                    *ppi.FAULTS,
                 )
             )
         ),
-        help="required for GPIO fault, sensor, watchdog, RTC, EGU and GPIOTE; none is nominal",
+        help="required for GPIO fault, sensor, watchdog, RTC, EGU, GPIOTE and PPI; none is nominal",
     )
     plan.add_argument("--firmware", type=Path, required=True)
     plan.add_argument("--firmware-sha256", required=True)
@@ -145,9 +148,11 @@ def main(argv=None):
                         rtc.PROFILE,
                         egu.PROFILE,
                         gpiote.PROFILE,
+                        ppi.PROFILE,
                     )
                 ),
-                "--fault is required only for GPIO fault, sensor, watchdog, RTC, EGU or GPIOTE",
+                "--fault is required only for GPIO fault, sensor, watchdog, RTC, EGU, "
+                "GPIOTE or PPI",
             )
             common = (
                 args.runtime_lock,
@@ -158,7 +163,9 @@ def main(argv=None):
                 args.build_line,
                 args.heartbeat_prefix,
                 (
-                    7
+                    8
+                    if args.profile == ppi.PROFILE
+                    else 7
                     if args.profile == gpiote.PROFILE
                     else 9
                     if args.profile == egu.PROFILE
@@ -175,6 +182,7 @@ def main(argv=None):
                         rtc.PROFILE,
                         egu.PROFILE,
                         gpiote.PROFILE,
+                        ppi.PROFILE,
                     )
                     else 3
                 )
@@ -227,11 +235,14 @@ def main(argv=None):
                         rtc.PROFILE,
                         egu.PROFILE,
                         gpiote.PROFILE,
+                        ppi.PROFILE,
                     ),
                     "profile/backend differ",
                 )
                 planner = (
-                    gpiote.GPIOTEProfile(args.fault).make_plan
+                    ppi.PPIProfile(args.fault).make_plan
+                    if args.profile == ppi.PROFILE
+                    else gpiote.GPIOTEProfile(args.fault).make_plan
                     if args.profile == gpiote.PROFILE
                     else egu.EGUProfile(args.fault).make_plan
                     if args.profile == egu.PROFILE
@@ -251,7 +262,7 @@ def main(argv=None):
                 )
                 default_ms = (
                     40
-                    if args.profile in (egu.PROFILE, gpiote.PROFILE)
+                    if args.profile in (egu.PROFILE, gpiote.PROFILE, ppi.PROFILE)
                     else 162
                     if args.profile == rtc.PROFILE
                     else 82
@@ -265,6 +276,7 @@ def main(argv=None):
                         rtc.PROFILE,
                         egu.PROFILE,
                         gpiote.PROFILE,
+                        ppi.PROFILE,
                     )
                     else 250
                 )
@@ -297,6 +309,7 @@ def main(argv=None):
                 rtc.PLAN_SCHEMA: rtc.load_plan,
                 egu.PLAN_SCHEMA: egu.load_plan,
                 gpiote.PLAN_SCHEMA: gpiote.load_plan,
+                ppi.PLAN_SCHEMA: ppi.load_plan,
                 esp_wasm.PLAN_SCHEMA: esp_wasm.load_plan,
             }.get(schema, load_plan)
             result = loader(args.plan, args.sha256)
@@ -320,6 +333,7 @@ def main(argv=None):
                 rtc.REPORT_SCHEMA: rtc.inspect_report,
                 egu.REPORT_SCHEMA: egu.inspect_report,
                 gpiote.REPORT_SCHEMA: gpiote.inspect_report,
+                ppi.REPORT_SCHEMA: ppi.inspect_report,
                 esp_wasm.REPORT_SCHEMA: esp_wasm.inspect_report,
             }.get(schema, inspect_report)
             result = inspector(
@@ -341,6 +355,7 @@ def main(argv=None):
                 rtc.PLAN_SCHEMA: rtc.run,
                 egu.PLAN_SCHEMA: egu.run,
                 gpiote.PLAN_SCHEMA: gpiote.run,
+                ppi.PLAN_SCHEMA: ppi.run,
                 esp_wasm.PLAN_SCHEMA: esp_wasm.run,
             }.get(schema, run)
             result = runner(

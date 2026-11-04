@@ -154,6 +154,7 @@ def main() -> None:
         *(("nrf52840-rtc-v1", f) for f in ("none", "rtc-stop", "rtc-irq-mask")),
         *(("nrf52840-egu-v1", f) for f in ("none", "egu-irq-mask", "egu-channel-misroute")),
         *(("nrf52840-gpiote-v1", f) for f in ("none", "gpiote-irq-mask", "gpiote-wrong-polarity")),
+        *(("nrf52840-ppi-v1", f) for f in ("none", "ppi-channel-disable", "ppi-fork-misroute")),
     ):
         label = profile + "-" + fault
         sensor_plan = root / (label + ".plan.json")

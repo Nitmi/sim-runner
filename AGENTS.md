@@ -22,6 +22,11 @@ The fixed GPIOTE input profile covers channels 0/1/2, P0.11 rising, P0.12 fallin
 and P1.3 toggle edges with paused CONFIG/EVENTS_IN/INTEN/GPIO snapshots. Its two
 faults mask channel 2 or change its polarity to falling. No TASKS_OUT/SET/CLR,
 PORT/SENSE/LATCH/DETECTMODE, PPI, electrical behavior or physical timing is qualified.
+The fixed PPI profile separately covers TIMER0 compare0 -> CH0 TEP/FORK ->
+GPIOTE OUT0/1 and sentinel OUT2, with CHENCLR/fork-misroute faults. PPI defers
+tasks to nearest synced state: never claim event-time alignment or precise
+timing. Inactive RTC/RADIO models satisfy lazy fixed-channel subscriptions;
+fixed channels remain disabled and no radio medium or bridge is created.
 These sensor controls do not model electrical I2C, NACK/disconnect, conversion
 delay, calibration or physical accuracy. Use
 Renode 1.17 source semantics, not a newer model's registers. Espressif QEMU covers

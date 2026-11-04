@@ -1,5 +1,45 @@
 # Handoff
 
+## 2026-11-04 — local 0.14.0 TIMER0/PPI/GPIOTE routing
+
+Branch feat/nrf52840-ppi starts at published0.13 source6d67eb461dcd21f5fd9b17a096488cd1823d1598.
+Adds fixed nrf52840-ppi-v1, TIMER0 compare0 -> channel0 TEP/FORK ->
+GPIOTE OUT0 P0.11 / OUT1 P1.3; OUT2 P0.13 is a misroute sentinel. Forty
+virtual ms, eight monitor-controlled timer intervals and16 PRE/POST snapshots
+with14 registers each. Guest pins and model endpoints/events/config/IN/OUT
+must agree. CHENCLR and fork-misroute effects remain failed nominal regressions.
+No HIL/Trace/Toolkit/station/PATH changes or publication are included.
+
+Audit fixed infrastructure066a7f13: PPI queues tasks in
+ExecuteInNearestSyncedState; upstreamissue1016 describes delayed triggering.
+Never claim event alignment, precise timing or broad PPI qualification. Timer
+SHORTS/BITMODE are not implemented in the selected register definitions; the
+fixed monitor explicitly STOP/CLEAR/STARTs intervals instead. First PPI write
+lazily subscribes fixed channels to TIMER0/RTC/RADIO; map inactive RTC0/RADIO
+providers so initialization succeeds without hiding errors. Fixed channels stay
+disabled, RTC stays stopped, radio has no medium. This is not radio coverage.
+GPIOTE task output changes do not update CONFIG.OUTINIT in this model; the
+register oracle uses fixed task configurations and separately observes GPIO.
+
+Evidence D:/Code/tmp/sim-ppi-0140-20261104: source nominal, two faults,
+wrong EEP/TEP, missing fork, disabled channel, wrong polarity, unmapped write
+and wrong BUILD all produced expected verdicts, ten native attempts, no retries.
+All completed with exit0, full virtual budget and Job/thread cleanup. Unmapped
+write is MODEL_COVERAGE_FAILED with no assertion claims. Wrong BUILD retains
+16 observations but no guest samples and unknown fault effect. Exact logs,
+snapshot spans, raw UART and hashes are retained. Fixture builds bind compiler,
+all three LF source files and variant; binaries live outside Git.
+
+Final Python3.11/3.13 each passed548 tests; Ruff/format and offline lock check
+passed. Earlier host errors are preserved: one101-character CLI help line;
+the harness assumed313 had Ruff (use existing311 Ruff instead); the independent
+synthetic release inventory literals needed43/42 after two new package files.
+Original partial test results were547 passed, then547 passed/1 failed before
+the inventory literal correction. No backend attempt failed unexpectedly.
+Next stages after this source commit: dual reproducible packages, isolated
+installations/native controls, write/process/network-denied moved evidence
+inspection and measured host costs. Preserve original receipts and use fresh labels.
+
 ## 2026-11-03 — local 0.13.0 GPIOTE development
 
 Branch feat/nrf52840-gpiote starts at published 0.12 source

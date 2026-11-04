@@ -50,13 +50,21 @@ regressions even when their effects are observed. PPI, guest task generation,
 external signals and physical timing are outside coverage. New EGU schemas
 are supported by published HIL/Trace 0.17.0 and Toolkit 0.40.0.
 
-Local candidate **0.13.0** adds a fixed
+Version **0.13.0** adds a fixed
 [GPIOTE input-event/IRQ regression](docs/nrf52840-gpiote.md). Rising, falling and
 toggle inputs on three channels are checked against guest ISR samples, GPIO
 input levels and 18 paused register snapshots. Masked IRQ and wrong-polarity
 controls retain failed nominal verdicts even when their model effects are
 observed. Output tasks, PORT/SENSE, PPI, electrical behavior and physical timing
-are outside coverage. These new schemas require separate HIL/Trace integration.
+are outside coverage. Published HIL/Trace 0.18.0 and Toolkit 0.41.0 support it.
+
+Local candidate **0.14.0** adds the fixed
+[TIMER0 → PPI → GPIOTE functional regression](docs/nrf52840-ppi.md). Main and
+forked output tasks are checked against 16 paused snapshots and guest GPIO
+samples; channel-disable and fork-misroute faults remain failed nominal runs.
+The pinned model defers tasks to a synchronized state: event alignment, precise
+timing and broad PPI coverage remain unqualified. HIL/Trace integration and
+publication are separate future steps.
 
 Release **0.7.0** adds an experimental
 [ESP-EMU 0.50.0 WASM / ESP32-C3 Flash profile](docs/esp-emulator-wasm.md).
