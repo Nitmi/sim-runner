@@ -40,6 +40,13 @@ Next stages after this source commit: dual reproducible packages, isolated
 installations/native controls, write/process/network-denied moved evidence
 inspection and measured host costs. Preserve original receipts and use fresh labels.
 
+The first dual builds at224eeff were reproducible, but cold311 stopped before
+any native launch because package_smoke.py retained the previous36-file literal.
+Its expected runtime inventory is now38 (24 modules +14 assets), matching the
+independent release verifier/test inventory. Keep old dist/candidate/cold logs;
+rebuild both packages from the corrected commit and use fresh v2 install roots.
+No simulator runtime behavior changed in this packaging correction.
+
 ## 2026-11-03 — local 0.13.0 GPIOTE development
 
 Branch feat/nrf52840-gpiote starts at published 0.12 source
