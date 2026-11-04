@@ -27,6 +27,11 @@ GPIOTE OUT0/1 and sentinel OUT2, with CHENCLR/fork-misroute faults. PPI defers
 tasks to nearest synced state: never claim event-time alignment or precise
 timing. Inactive RTC/RADIO models satisfy lazy fixed-channel subscriptions;
 fixed channels remain disabled and no radio medium or bridge is created.
+The fixed UARTE1 EasyDMA RX profile checks PTR/MAXCNT/AMOUNT, RX event latches
+and three guarded SRAM words before guest service. Two fixed descriptor faults
+shorten MAXCNT or shift PTR and restart RX at stimulus four. Model WriteChar
+is not external UART input; no TX DMA, IRQ/PPI routing, baud/line/electrical
+behavior, zero-length transfers or physical DMA/timing qualification is implied.
 These sensor controls do not model electrical I2C, NACK/disconnect, conversion
 delay, calibration or physical accuracy. Use
 Renode 1.17 source semantics, not a newer model's registers. Espressif QEMU covers

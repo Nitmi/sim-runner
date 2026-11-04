@@ -19,6 +19,7 @@ from . import (
     rtc,
     sensor,
     spi_sensor,
+    uarte_dma,
     watchdog,
 )
 from .common import FLAGS, SimError, bound, decode, file_record, require, write_json
@@ -64,6 +65,7 @@ def main(argv=None):
             egu.PROFILE,
             gpiote.PROFILE,
             ppi.PROFILE,
+            uarte_dma.PROFILE,
             qemu.PROFILE,
             qemu_flash.PROFILE,
             qemu_s3.PROFILE,
@@ -83,10 +85,11 @@ def main(argv=None):
                     *egu.FAULTS,
                     *gpiote.FAULTS,
                     *ppi.FAULTS,
+                    *uarte_dma.FAULTS,
                 )
             )
         ),
-        help="required for GPIO fault, sensor, watchdog, RTC, EGU, GPIOTE and PPI; none is nominal",
+        help="required for fixed peripheral fault profiles; none is nominal",
     )
     plan.add_argument("--firmware", type=Path, required=True)
     plan.add_argument("--firmware-sha256", required=True)
@@ -149,10 +152,11 @@ def main(argv=None):
                         egu.PROFILE,
                         gpiote.PROFILE,
                         ppi.PROFILE,
+                        uarte_dma.PROFILE,
                     )
                 ),
                 "--fault is required only for GPIO fault, sensor, watchdog, RTC, EGU, "
-                "GPIOTE or PPI",
+                "GPIOTE, PPI or UARTE DMA",
             )
             common = (
                 args.runtime_lock,
@@ -164,7 +168,7 @@ def main(argv=None):
                 args.heartbeat_prefix,
                 (
                     8
-                    if args.profile == ppi.PROFILE
+                    if args.profile in (ppi.PROFILE, uarte_dma.PROFILE)
                     else 7
                     if args.profile == gpiote.PROFILE
                     else 9
@@ -183,6 +187,7 @@ def main(argv=None):
                         egu.PROFILE,
                         gpiote.PROFILE,
                         ppi.PROFILE,
+                        uarte_dma.PROFILE,
                     )
                     else 3
                 )
@@ -236,11 +241,14 @@ def main(argv=None):
                         egu.PROFILE,
                         gpiote.PROFILE,
                         ppi.PROFILE,
+                        uarte_dma.PROFILE,
                     ),
                     "profile/backend differ",
                 )
                 planner = (
-                    ppi.PPIProfile(args.fault).make_plan
+                    uarte_dma.UARTEDMAProfile(args.fault).make_plan
+                    if args.profile == uarte_dma.PROFILE
+                    else ppi.PPIProfile(args.fault).make_plan
                     if args.profile == ppi.PROFILE
                     else gpiote.GPIOTEProfile(args.fault).make_plan
                     if args.profile == gpiote.PROFILE
@@ -262,7 +270,7 @@ def main(argv=None):
                 )
                 default_ms = (
                     40
-                    if args.profile in (egu.PROFILE, gpiote.PROFILE, ppi.PROFILE)
+                    if args.profile in (egu.PROFILE, gpiote.PROFILE, ppi.PROFILE, uarte_dma.PROFILE)
                     else 162
                     if args.profile == rtc.PROFILE
                     else 82
@@ -277,6 +285,7 @@ def main(argv=None):
                         egu.PROFILE,
                         gpiote.PROFILE,
                         ppi.PROFILE,
+                        uarte_dma.PROFILE,
                     )
                     else 250
                 )
@@ -310,6 +319,7 @@ def main(argv=None):
                 egu.PLAN_SCHEMA: egu.load_plan,
                 gpiote.PLAN_SCHEMA: gpiote.load_plan,
                 ppi.PLAN_SCHEMA: ppi.load_plan,
+                uarte_dma.PLAN_SCHEMA: uarte_dma.load_plan,
                 esp_wasm.PLAN_SCHEMA: esp_wasm.load_plan,
             }.get(schema, load_plan)
             result = loader(args.plan, args.sha256)
@@ -334,6 +344,7 @@ def main(argv=None):
                 egu.REPORT_SCHEMA: egu.inspect_report,
                 gpiote.REPORT_SCHEMA: gpiote.inspect_report,
                 ppi.REPORT_SCHEMA: ppi.inspect_report,
+                uarte_dma.REPORT_SCHEMA: uarte_dma.inspect_report,
                 esp_wasm.REPORT_SCHEMA: esp_wasm.inspect_report,
             }.get(schema, inspect_report)
             result = inspector(
@@ -356,6 +367,7 @@ def main(argv=None):
                 egu.PLAN_SCHEMA: egu.run,
                 gpiote.PLAN_SCHEMA: gpiote.run,
                 ppi.PLAN_SCHEMA: ppi.run,
+                uarte_dma.PLAN_SCHEMA: uarte_dma.run,
                 esp_wasm.PLAN_SCHEMA: esp_wasm.run,
             }.get(schema, run)
             result = runner(

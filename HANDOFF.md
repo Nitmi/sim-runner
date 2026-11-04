@@ -1,5 +1,37 @@
 # Handoff
 
+## 2026-11-04 — local 0.15.0 UARTE1 EasyDMA RX
+
+Branch feat/nrf52840-uarte-dma starts at published0.14 source
+7497744fa00975181441a76372b4d6fe23bc16c0. Fixed nrf52840-uarte-dma-v1
+uses eight four-byte model inputs, guarded SRAM, polling guest reports and
+16 paused PRE/POST snapshots with12 fields each in40 virtual ms. MAXCNT=3
+and PTR+1 descriptor controls restart RX at frame index4; observed effects
+remain failed nominal regressions. No TX DMA, IRQ/PPI, line/electrical,
+physical DMA/timing or complete model qualification. See the profile doc.
+
+Pinned UART source066a7f13 latches PTR/clears AMOUNT at STARTRX and writes
+incoming model bytes to SRAM. Do not substitute unsupported SPI AMOUNT or
+TX completion semantics, and do not describe WriteChar as physical UART.
+The guard detects the modeled overwrite; it is not enforced memory protection.
+
+Local evidence D:/Code/tmp/sim-uarte-dma-0150-20261104. Source nominal,
+two descriptor faults, wrong pointer/length, stale buffer, wrong word order,
+missing rearm, unsupported MMIO and wrong BUILD all produced expected
+verdicts in10 native attempts, zero retries. All exited0 with full40 ms and
+Job/process/capture-thread cleanup. Wrong BUILD retains16 observations with
+no guest samples and unknown fault effect. Unmapped MMIO retains
+MODEL_COVERAGE_FAILED with no assertion claims. Every result passed saved
+inspection. Python3.11/3.13 each passed595 tests. The first313 wrapper imported a
+stale installed wheel and stopped collection; retain that receipt, use -I
+plus an explicit source path for source pytest, and reserve installed -I
+checks for cold wheel qualification. The311 environment resolves current
+source. No product/runtime fix or test weakening is warranted by that
+wrapper error. Next qualification stages are dual reproducible packages,
+isolated installation/native controls, denied-input offline replay and warm
+host costs. Final receipts in that evidence directory supersede this source
+checkpoint. No publication or HIL/Trace/Toolkit edits.
+
 ## 2026-11-04 — local 0.14.0 TIMER0/PPI/GPIOTE routing
 
 Branch feat/nrf52840-ppi starts at published0.13 source6d67eb461dcd21f5fd9b17a096488cd1823d1598.

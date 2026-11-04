@@ -155,6 +155,7 @@ def main() -> None:
         *(("nrf52840-egu-v1", f) for f in ("none", "egu-irq-mask", "egu-channel-misroute")),
         *(("nrf52840-gpiote-v1", f) for f in ("none", "gpiote-irq-mask", "gpiote-wrong-polarity")),
         *(("nrf52840-ppi-v1", f) for f in ("none", "ppi-channel-disable", "ppi-fork-misroute")),
+        *(("nrf52840-uarte-dma-v1", f) for f in ("none", "rx-short-buffer", "rx-pointer-shift")),
     ):
         label = profile + "-" + fault
         sensor_plan = root / (label + ".plan.json")
@@ -201,7 +202,7 @@ def main() -> None:
             if item.filename.startswith("sim_runner/") and not item.is_dir():
                 assert (package.parent / item.filename).read_bytes() == archive.read(item)
                 verified += 1
-    assert verified == 38, "Expected 24 modules and fourteen fixed model/host assets"
+    assert verified == 40, "Expected 25 modules and fifteen fixed model/host assets"
     report = {
         "ok": True,
         "version": version,

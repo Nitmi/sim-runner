@@ -58,13 +58,21 @@ controls retain failed nominal verdicts even when their model effects are
 observed. Output tasks, PORT/SENSE, PPI, electrical behavior and physical timing
 are outside coverage. Published HIL/Trace 0.18.0 and Toolkit 0.41.0 support it.
 
-Local candidate **0.14.0** adds the fixed
+Version **0.14.0** adds the fixed
 [TIMER0 → PPI → GPIOTE functional regression](docs/nrf52840-ppi.md). Main and
 forked output tasks are checked against 16 paused snapshots and guest GPIO
 samples; channel-disable and fork-misroute faults remain failed nominal runs.
 The pinned model defers tasks to a synchronized state: event alignment, precise
-timing and broad PPI coverage remain unqualified. HIL/Trace integration and
-publication are separate future steps.
+timing and broad PPI coverage remain unqualified. Published HIL/Trace 0.19.0
+and Toolkit 0.42.0 support it.
+
+Local candidate **0.15.0** adds a fixed
+[UARTE1 EasyDMA RX regression](docs/nrf52840-uarte-dma.md). Eight four-byte
+frames are checked against guest reports and paused descriptor, event and SRAM
+snapshots. Shortened MAXCNT and shifted PTR controls expose truncated data or
+a changed guard word while retaining failed nominal verdicts. Model byte input
+does not qualify UART lines, TX DMA, IRQ/PPI routing or physical DMA timing.
+HIL/Trace integration and publication are separate future steps.
 
 Release **0.7.0** adds an experimental
 [ESP-EMU 0.50.0 WASM / ESP32-C3 Flash profile](docs/esp-emulator-wasm.md).
