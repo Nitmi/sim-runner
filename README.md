@@ -66,13 +66,21 @@ The pinned model defers tasks to a synchronized state: event alignment, precise
 timing and broad PPI coverage remain unqualified. Published HIL/Trace 0.19.0
 and Toolkit 0.42.0 support it.
 
-Local candidate **0.15.0** adds a fixed
+Version **0.15.0** adds a fixed
 [UARTE1 EasyDMA RX regression](docs/nrf52840-uarte-dma.md). Eight four-byte
 frames are checked against guest reports and paused descriptor, event and SRAM
 snapshots. Shortened MAXCNT and shifted PTR controls expose truncated data or
 a changed guard word while retaining failed nominal verdicts. Model byte input
 does not qualify UART lines, TX DMA, IRQ/PPI routing or physical DMA timing.
-HIL/Trace integration and publication are separate future steps.
+Published HIL/Trace0.20.0 and Toolkit0.43.0 support that RX schema.
+
+Local candidate **0.16.0** adds the fixed
+[ECB AES-128 known-answer regression](docs/nrf52840-ecb.md). Eight transactions
+check NIST public vectors against guest ciphertext and32-field descriptor,
+event and guarded-SRAM snapshots. Plaintext-repeat and context-redirect faults
+retain failed nominal verdicts. This tests bounded buffer/peripheral behavior,
+not hardware cryptography, secure key handling or security certification.
+The independent ECB schemas require explicit HIL/Trace/Toolkit adoption.
 
 Release **0.7.0** adds an experimental
 [ESP-EMU 0.50.0 WASM / ESP32-C3 Flash profile](docs/esp-emulator-wasm.md).

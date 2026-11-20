@@ -32,6 +32,12 @@ and three guarded SRAM words before guest service. Two fixed descriptor faults
 shorten MAXCNT or shift PTR and restart RX at stimulus four. Model WriteChar
 is not external UART input; no TX DMA, IRQ/PPI routing, baud/line/electrical
 behavior, zero-length transfers or physical DMA/timing qualification is implied.
+The fixed ECB profile compares eight AES128 public known-answer transactions
+with32-field SRAM/register snapshots. Plaintext-stuck and valid-context redirect
+faults retain failed nominal verdicts. START is synchronous in the pinned model;
+do not qualify STOP/ERROR, interrupts/PPI, hardware crypto, security certification,
+key protection, power, side-channel resistance or physical timing. Public test
+keys only; this profile does not recommend ECB for application encryption.
 These sensor controls do not model electrical I2C, NACK/disconnect, conversion
 delay, calibration or physical accuracy. Use
 Renode 1.17 source semantics, not a newer model's registers. Espressif QEMU covers

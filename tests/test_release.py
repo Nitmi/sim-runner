@@ -47,6 +47,7 @@ MODULES = (
     "gpiote.py",
     "ppi.py",
     "uarte_dma.py",
+    "ecb.py",
     "winjob.py",
 )
 ASSETS = (
@@ -60,6 +61,7 @@ ASSETS = (
     "nrf52840-gpiote.repl",
     "nrf52840-ppi.repl",
     "nrf52840-uarte-dma.repl",
+    "nrf52840-ecb.repl",
     "esp32c3-uart.json",
     "esp32c3-idf-flash.json",
     "esp32s3-idf-flash.json",
@@ -139,7 +141,7 @@ def test_verify_binds_bytes_but_does_not_claim_publisher_authentication(tmp_path
     monkeypatch.setattr(release.subprocess, "run", forbidden)
     report = release.verify(tmp_path, REVISION)
     assert report["ok"] and report["source_revision"] == REVISION
-    assert report["wheel_members"] == 45 and report["source_members"] == 44
+    assert report["wheel_members"] == 47 and report["source_members"] == 46
     assert not report["executables_started"] and not report["hardware_access"]
     assert not report["publisher_authenticity_verified"]
     with pytest.raises(ValueError, match="Source revision differs"):

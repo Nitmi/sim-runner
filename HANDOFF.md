@@ -1,5 +1,34 @@
 # Handoff
 
+## 2026-11-20 — local0.16.0 ECB AES128 known-answer regression
+
+Branch feat/nrf52840-ecb starts at published0.15 source1d185ec695340410def3c5620c9d486d1625d644.
+The fixed nrf52840-ecb-v1 uses NIST SP800-38A F.1.1 public vectors, eight guest
+START/poll transactions and16 paused32-field observations in40virtualms. Two
+guarded48-byte SRAM contexts separate intended versus redirected output; monitor
+faults from transaction4 repeat plaintext4 or select the valid alternate context.
+Both observed effects remain failed nominal regressions. Wrong BUILD preserves
+model observations but no qualified guest samples/effect. No HIL/Trace/Toolkit,
+station/PATH, publication or physical device changes are in scope.
+
+Pinned infrastructure066a7f13 ECB is synchronous and ignores the START write's
+bit value. STOP/ERROR lack defined registers. Do not qualify IRQ/PPI, abort/error,
+other modes/decryption, physical timing/hardware crypto, key protection, power,
+side-channel resistance or cryptographic certification. Public fixture key only;
+known-answer evidence is not a recommendation to use ECB for application data.
+SAADC/PWM are not in this pinned model tree; SPIM AMOUNT is not updated by its
+transaction path. Do not fake those capabilities to add another profile.
+
+Evidence D:/Code/tmp/sim-ecb-0160-20261120. First real native nominal passed;
+descriptor/plaintext faults and seven wrong-firmware variants plus wrong BUILD
+are individually captured with no retries. Source Python3.11/3.13 each681 tests
+passed; lint/format/offline lock/diff pass. Initial auxiliary lint identified one
+import block and one101-char fixture line, corrected before the full checks.
+An auxiliary read guessed native.py (actual matrix.py); no execution used it.
+Native matrix completion, dual reproducible packages, isolated installations,
+moved saved-report inspection and warm costs are recorded externally; final
+receipts there supersede this pre-commit checkpoint. No native result is erased.
+
 ## 2026-11-04 — local 0.15.0 UARTE1 EasyDMA RX
 
 Branch feat/nrf52840-uarte-dma starts at published0.14 source
